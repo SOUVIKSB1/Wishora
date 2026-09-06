@@ -92,15 +92,19 @@ export const api = {
     const query = new URLSearchParams(params as any).toString();
     return fetchApi<{ wishes: any[]; total: number }>(`/wishes${query ? `?${query}` : ''}`);
   },
-  getWish: (id: string) => fetchApi<{ wish: any; photos: any[]; opens: any[]; reactions: any[] }>(`/wishes/${id}`),
+  getWish: (id: string) => fetchApi<{ wish: any; photos: any[]; opens: any[]; reactions: any[]; versions?: any[] }>(`/wishes/${id}`),
   createWish: (data: any) => fetchApi<{ wish: any; photos: any[] }>('/wishes', { method: 'POST', body: JSON.stringify(data) }),
   updateWish: (id: string, data: any) => fetchApi<{ wish: any; photos: any[] }>(`/wishes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteWish: (id: string) => fetchApi<{ success: boolean; id: string }>(`/wishes/${id}`, { method: 'DELETE' }),
   generateWishLink: (id: string) => fetchApi<{ success: boolean; wish: any; slug: string; share_url: string }>(`/wishes/${id}/generate`, { method: 'POST' }),
+  getWishVersions: (id: string) => fetchApi<{ versions: any[] }>(`/wishes/${id}/versions`),
+  revertWishVersion: (id: string, versionId: string) => fetchApi<{ success: boolean; wish: any; photos: any[] }>(`/wishes/${id}/revert/${versionId}`, { method: 'POST' }),
 
-  // AI Suggestion
+  // AI Suggestion & Captions
   suggestWish: (data: { name: string; age?: number; gender?: string; relationship?: string; language?: string; tone?: string }) =>
     fetchApi<{ suggestions: Array<{ tone: string; message: string; emoji_suggestion: string }> }>('/ai/suggest-wish', { method: 'POST', body: JSON.stringify(data) }),
+  generateCaptions: (data: { name: string; relationship?: string; age?: number; gender?: string; theme?: string; count: number }) =>
+    fetchApi<{ captions: string[] }>('/ai/generate-captions', { method: 'POST', body: JSON.stringify(data) }),
 
   // Music
   getMusic: () => fetchApi<{ tracks: any[] }>('/music'),

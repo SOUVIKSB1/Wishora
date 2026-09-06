@@ -9,6 +9,8 @@ interface StepMusicProps {
   customMusicUrl?: string;
   trimStart: number;
   trimEnd: number;
+  volume?: number;
+  onVolumeChange?: (volume: number) => void;
   onSelectMusic: (id: string, customUrl?: string) => void;
   onTrimChange: (start: number, end: number) => void;
   onPlayPreview: (trackId: string, storageUrl: string) => void;
@@ -20,6 +22,8 @@ export const StepMusic: React.FC<StepMusicProps> = ({
   customMusicUrl,
   trimStart,
   trimEnd,
+  volume = 0.8,
+  onVolumeChange,
   onSelectMusic,
   onTrimChange,
   onPlayPreview,
@@ -202,6 +206,8 @@ export const StepMusic: React.FC<StepMusicProps> = ({
             duration={currentTrack.duration || 90}
             trimStart={trimStart}
             trimEnd={trimEnd}
+            volume={volume}
+            onVolumeChange={onVolumeChange}
             onChange={onTrimChange}
             isPlaying={isPlaying}
             onTogglePlay={() => onPlayPreview(currentTrack.id, currentTrack.storage_url)}

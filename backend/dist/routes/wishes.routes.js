@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { extractUserId } from './auth.routes.js';
 export async function wishesRoutes(fastify) {
     // List all wishes
+    // List all wishes
     fastify.get('/wishes', async (req) => {
         const userId = extractUserId(req) || 'usr_default_master';
         const query = req.query;
@@ -20,7 +21,8 @@ export async function wishesRoutes(fastify) {
              (SELECT message_text FROM reactions WHERE wish_id = w.id ORDER BY created_at DESC LIMIT 1) as last_reaction_text,
              (SELECT media_url FROM reactions WHERE wish_id = w.id ORDER BY created_at DESC LIMIT 1) as last_reaction_media,
              (SELECT duration FROM reactions WHERE wish_id = w.id ORDER BY created_at DESC LIMIT 1) as last_reaction_duration,
-             (SELECT created_at FROM reactions WHERE wish_id = w.id ORDER BY created_at DESC LIMIT 1) as last_reaction_at
+             (SELECT created_at FROM reactions WHERE wish_id = w.id ORDER BY created_at DESC LIMIT 1) as last_reaction_at,
+             (SELECT COUNT(*) FROM wish_versions WHERE wish_id = w.id) as version_count
       FROM wishes w
       LEFT JOIN contacts c ON w.contact_id = c.id
       LEFT JOIN folders f ON w.folder_id = f.id
@@ -40,7 +42,7 @@ export async function wishesRoutes(fastify) {
         const wishes = db.prepare(sql).all(...params);
         return { wishes, total: wishes.length };
     });
-    // Get single wish detail
+    // Get single wish detail with version history
     fastify.get('/wishes/:id', async (req, reply) => {
         const { id } = req.params;
         const wish = db.prepare(`
@@ -56,7 +58,77 @@ export async function wishesRoutes(fastify) {
         const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
         const opens = db.prepare('SELECT * FROM wish_opens WHERE wish_id = ? ORDER BY opened_at DESC LIMIT 20').all(id);
         const reactions = db.prepare('SELECT * FROM reactions WHERE wish_id = ? ORDER BY created_at DESC').all(id);
-        return { wish, photos, opens, reactions };
+        const rawVersions = db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id);
+        const versions = rawVersions.map(v => ({
+            ...v,
+            snapshot: JSON.parse(v.snapshot_data || '{}')
+        }));
+        return { wish, photos, opens, reactions, versions };
+    });
+    // Get versions of a wish
+    fastify.get('/wishes/:id/versions', async (req, reply) => {
+        const { id } = req.params;
+        const rawVersions = db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id);
+        const versions = rawVersions.map(v => ({
+            ...v,
+            snapshot: JSON.parse(v.snapshot_data || '{}')
+        }));
+        return { versions };
+    });
+    // Revert wish to previous version
+    fastify.post('/wishes/:id/revert/:versionId', async (req, reply) => {
+        const { id, versionId } = req.params;
+        const versionRecord = db.prepare('SELECT * FROM wish_versions WHERE id = ? AND wish_id = ?').get(versionId, id);
+        if (!versionRecord) {
+            return reply.code(404).send({ error: 'Version record not found' });
+        }
+        const snapshot = JSON.parse(versionRecord.snapshot_data || '{}');
+        const oldWish = snapshot.wish;
+        const oldPhotos = snapshot.photos || [];
+        if (!oldWish) {
+            return reply.code(400).send({ error: 'Snapshot data is corrupt or missing' });
+        }
+        const revertTx = db.transaction(() => {
+            // Archive current before reverting
+            const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+            const currentPhotos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
+            if (currentWish) {
+                db.prepare(`
+          INSERT INTO wish_versions (id, wish_id, version_number, snapshot_data, note)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(`ver_${nanoid(10)}`, id, currentWish.version || 1, JSON.stringify({ wish: currentWish, photos: currentPhotos }), `Reverting back to v${versionRecord.version_number}`);
+            }
+            const stmt = db.prepare(`
+        UPDATE wishes SET
+          folder_id = ?,
+          recipient_name = ?,
+          recipient_dob = ?,
+          recipient_gender = ?,
+          wish_text = ?,
+          wish_language = ?,
+          theme = ?,
+          music_id = ?,
+          custom_music_url = ?,
+          music_trim_start = ?,
+          music_trim_end = ?,
+          music_volume = ?,
+          status = ?,
+          version = version + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+            stmt.run(oldWish.folder_id, oldWish.recipient_name, oldWish.recipient_dob, oldWish.recipient_gender, oldWish.wish_text, oldWish.wish_language, oldWish.theme, oldWish.music_id, oldWish.custom_music_url || null, oldWish.music_trim_start || 0, oldWish.music_trim_end || 30, oldWish.music_volume ?? 0.8, oldWish.status, id);
+            // Restore photos
+            db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
+            const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
+            oldPhotos.forEach((p, idx) => {
+                photoStmt.run(`pht_${nanoid(8)}`, id, p.storage_url || p.url, p.caption || null, idx, idx === 0 ? 1 : 0);
+            });
+        });
+        revertTx();
+        const updated = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+        const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
+        return { success: true, wish: updated, photos };
     });
     // Create wish
     fastify.post('/wishes', async (req, reply) => {
@@ -121,15 +193,16 @@ export async function wishesRoutes(fastify) {
         if (!trackExists) {
             musicId = 'trk_1';
         }
+        const musicVolume = body.music_volume !== undefined ? parseFloat(body.music_volume) : 0.8;
         const insertWishTx = db.transaction(() => {
             const stmt = db.prepare(`
         INSERT INTO wishes (
           id, user_id, folder_id, contact_id, slug, recipient_name, recipient_dob,
           recipient_gender, wish_text, wish_language, theme, music_id, custom_music_url,
-          music_trim_start, music_trim_end, status, scheduled_for
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          music_trim_start, music_trim_end, music_volume, version, status, scheduled_for
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-            stmt.run(id, userId, folderId, contactId, slug, recipientName, body.recipient_dob || '2000-01-01', body.recipient_gender || 'unspecified', body.wish_text || '', body.wish_language || 'en', body.theme || 'auto', musicId, body.custom_music_url || null, body.music_trim_start || 0, body.music_trim_end || 30, body.status || 'draft', body.scheduled_for || null);
+            stmt.run(id, userId, folderId, contactId, slug, recipientName, body.recipient_dob || '2000-01-01', body.recipient_gender || 'unspecified', body.wish_text || '', body.wish_language || 'en', body.theme || 'auto', musicId, body.custom_music_url || null, body.music_trim_start || 0, body.music_trim_end || 30, musicVolume, 1, body.status || 'draft', body.scheduled_for || null);
             // If photos are provided
             if (Array.isArray(body.photos) && body.photos.length > 0) {
                 const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
@@ -143,10 +216,15 @@ export async function wishesRoutes(fastify) {
         const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
         return { wish: created, photos };
     });
-    // Update wish
+    // Update wish with automatic version history archiving
     fastify.put('/wishes/:id', async (req, reply) => {
         const { id } = req.params;
         const body = req.body;
+        const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+        if (!currentWish) {
+            return reply.code(404).send({ error: 'Wish not found' });
+        }
+        const currentPhotos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
         let folderId = body.folder_id;
         if (folderId) {
             const folderExists = db.prepare('SELECT id FROM folders WHERE id = ?').get(folderId);
@@ -159,7 +237,15 @@ export async function wishesRoutes(fastify) {
             if (!trackExists)
                 musicId = 'trk_1';
         }
+        const musicVolume = body.music_volume !== undefined ? parseFloat(body.music_volume) : (currentWish.music_volume ?? 0.8);
+        const nextVer = (currentWish.version || 1) + 1;
         const updateWishTx = db.transaction(() => {
+            // 1. Archive prior snapshot into wish_versions
+            db.prepare(`
+        INSERT INTO wish_versions (id, wish_id, version_number, snapshot_data, note)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(`ver_${nanoid(10)}`, id, currentWish.version || 1, JSON.stringify({ wish: currentWish, photos: currentPhotos }), body.status === 'generated' ? 'Published revision' : 'Draft edit');
+            // 2. Update wishes table
             const stmt = db.prepare(`
         UPDATE wishes SET
           folder_id = COALESCE(?, folder_id),
@@ -173,12 +259,14 @@ export async function wishesRoutes(fastify) {
           custom_music_url = ?,
           music_trim_start = COALESCE(?, music_trim_start),
           music_trim_end = COALESCE(?, music_trim_end),
+          music_volume = ?,
+          version = ?,
           status = COALESCE(?, status),
           scheduled_for = ?,
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `);
-            stmt.run(folderId, body.recipient_name, body.recipient_dob, body.recipient_gender, body.wish_text, body.wish_language, body.theme, musicId, body.custom_music_url || null, body.music_trim_start, body.music_trim_end, body.status, body.scheduled_for || null, id);
+            stmt.run(folderId, body.recipient_name, body.recipient_dob, body.recipient_gender, body.wish_text, body.wish_language, body.theme, musicId, body.custom_music_url || null, body.music_trim_start, body.music_trim_end, musicVolume, nextVer, body.status, body.scheduled_for || null, id);
             // Update photos if passed
             if (Array.isArray(body.photos)) {
                 db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);

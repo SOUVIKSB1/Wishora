@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Image, Plus, Trash2, Sparkles, Star, MoveUp, MoveDown, UploadCloud, Link2 } from 'lucide-react';
+import { Image, Plus, Trash2, Sparkles, Star, MoveUp, MoveDown, UploadCloud, Link2, Loader2, RefreshCw } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { compressAndReadFileAsDataUrl } from '../../utils/avatar.js';
+import { api } from '../../services/api.js';
 
 interface PhotoItem {
   id: string;
@@ -13,6 +14,11 @@ interface PhotoItem {
 interface StepPhotosProps {
   photos: PhotoItem[];
   onChange: (photos: PhotoItem[]) => void;
+  recipientName?: string;
+  relationship?: string;
+  recipientAge?: number;
+  recipientGender?: string;
+  theme?: string;
 }
 
 const CURATED_SAMPLE_PHOTOS = [
@@ -23,11 +29,54 @@ const CURATED_SAMPLE_PHOTOS = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80'
 ];
 
-export const StepPhotos: React.FC<StepPhotosProps> = ({ photos, onChange }) => {
+export const StepPhotos: React.FC<StepPhotosProps> = ({
+  photos,
+  onChange,
+  recipientName = 'Friend',
+  relationship = 'Best Friend',
+  recipientAge = 25,
+  recipientGender = 'female',
+  theme = 'auto'
+}) => {
   const [customUrl, setCustomUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const fetchAiCaptions = async (count: number) => {
+    try {
+      const res = await api.generateCaptions({
+        name: recipientName || 'Friend',
+        relationship,
+        age: recipientAge,
+        gender: recipientGender,
+        theme,
+        count
+      });
+      return res.captions || [];
+    } catch (e) {
+      console.warn('AI caption auto-fetch failed:', e);
+      return [];
+    }
+  };
+
+  const handleAutoCaptionAll = async () => {
+    if (photos.length === 0 || isGeneratingCaptions) return;
+    setIsGeneratingCaptions(true);
+    try {
+      const captions = await fetchAiCaptions(photos.length);
+      if (captions.length > 0) {
+        const updated = photos.map((p, idx) => ({
+          ...p,
+          caption: captions[idx] || p.caption || 'Cherished moment'
+        }));
+        onChange(updated);
+      }
+    } finally {
+      setIsGeneratingCaptions(false);
+    }
+  };
 
   const processFiles = async (files: FileList | File[]) => {
     const remainingSlots = 12 - photos.length;
@@ -38,14 +87,15 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({ photos, onChange }) => {
 
     setIsProcessing(true);
     try {
-      const compressedUrls = await Promise.all(
-        filesToProcess.map(file => compressAndReadFileAsDataUrl(file, 800, 0.72))
-      );
+      const [compressedUrls, captions] = await Promise.all([
+        Promise.all(filesToProcess.map(file => compressAndReadFileAsDataUrl(file, 800, 0.72))),
+        fetchAiCaptions(filesToProcess.length)
+      ]);
 
       const newPhotos: PhotoItem[] = compressedUrls.map((url, idx) => ({
         id: `p_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_${idx}`,
         storage_url: url,
-        caption: filesToProcess[idx].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+        caption: captions[idx] || filesToProcess[idx].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
         is_featured: (photos.length === 0 && idx === 0) ? 1 : 0
       }));
 
@@ -192,6 +242,40 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({ photos, onChange }) => {
           ))}
         </div>
       </div>
+
+      {/* AI Smart Captions Action Bar */}
+      {photos.length > 0 && (
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-accent/15 via-purple-500/10 to-pink-500/15 border border-accent/30 shadow-glow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
+              <Sparkles size={14} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block">AI Auto-Caption Generator</span>
+              <span className="text-[10px] text-text-2 font-mono">Personalized evocative micro-captions for each memory</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAutoCaptionAll}
+            disabled={isGeneratingCaptions}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-void text-xs font-bold shadow-glow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+          >
+            {isGeneratingCaptions ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Crafting Captions...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={13} />
+                <span>Auto-Caption ({photos.length})</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Photos Grid & Captions */}
       {photos.length === 0 ? (

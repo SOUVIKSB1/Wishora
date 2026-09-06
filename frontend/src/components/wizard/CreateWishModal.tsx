@@ -58,6 +58,7 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
     custom_music_url: initialData?.custom_music_url || '',
     music_trim_start: initialData?.music_trim_start || 0,
     music_trim_end: initialData?.music_trim_end || 30,
+    music_volume: initialData?.music_volume ?? 0.8,
     folder_id: initialData?.folder_id || (folders && folders.length > 0 ? folders[0].id : ''),
     contact_id: initialData?.contact_id || null,
   });
@@ -97,6 +98,7 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
             custom_music_url: res.wish.custom_music_url || prev.custom_music_url,
             music_trim_start: res.wish.music_trim_start ?? prev.music_trim_start,
             music_trim_end: res.wish.music_trim_end ?? prev.music_trim_end,
+            music_volume: res.wish.music_volume ?? prev.music_volume,
             folder_id: res.wish.folder_id || prev.folder_id,
           }));
         }
@@ -273,6 +275,11 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
                 <StepPhotos
                   photos={photos}
                   onChange={setPhotos}
+                  recipientName={formData.recipient_name}
+                  relationship={formData.relationship}
+                  recipientAge={recipientAge}
+                  recipientGender={formData.recipient_gender}
+                  theme={formData.theme}
                 />
               )}
 
@@ -282,12 +289,14 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
                   customMusicUrl={formData.custom_music_url}
                   trimStart={formData.music_trim_start}
                   trimEnd={formData.music_trim_end}
+                  volume={formData.music_volume}
                   onSelectMusic={(id, customUrl) => setFormData(prev => ({
                     ...prev,
                     music_id: id,
                     custom_music_url: customUrl !== undefined ? customUrl : (id.startsWith('custom_') ? prev.custom_music_url : '')
                   }))}
                   onTrimChange={(start, end) => setFormData(prev => ({ ...prev, music_trim_start: start, music_trim_end: end }))}
+                  onVolumeChange={(vol) => setFormData(prev => ({ ...prev, music_volume: vol }))}
                   onPlayPreview={handlePlayPreview}
                   isPlaying={isPlaying}
                 />

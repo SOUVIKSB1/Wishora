@@ -15,6 +15,7 @@ import { OnboardingModal } from './components/OnboardingModal.js';
 import { AuthModal } from './components/auth/AuthModal.js';
 import { WishExperienceView } from './components/experience/WishExperienceView.js';
 import { ParticleField } from './components/canvas/ParticleField.js';
+import { getAvatarUrl } from './utils/avatar.js';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'wishbook' | 'contacts' | 'profile'>('home');
@@ -181,38 +182,64 @@ export function App() {
       {/* Ambient Particle Field in Background */}
       <ParticleField density={30} colors={['#C8A96E', '#FFF1D0', '#7C3AED']} />
 
-      {/* Main App Container */}
-      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 py-6 sm:py-8 mb-20">
-        {/* Top Navbar */}
-        <header className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.08]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-accent to-yellow-700 flex items-center justify-center font-display font-black text-void text-lg shadow-glow-sm">
+      {/* Sticky Glass Top Navbar */}
+      <header className="sticky top-0 z-30 bg-void/85 backdrop-blur-2xl border-b border-white/[0.09] px-4 sm:px-8 py-3 transition-all">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          {/* Brand Logo & Title */}
+          <div
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-accent to-yellow-700 flex items-center justify-center font-display font-black text-void text-base sm:text-lg shadow-[0_0_15px_rgba(200,169,110,0.35)] group-hover:scale-105 transition-transform flex-shrink-0">
               W
             </div>
             <div>
-              <span className="text-xl font-display font-extrabold tracking-tight text-text-1">
+              <span className="text-base sm:text-lg font-display font-black tracking-tight text-white group-hover:text-accent transition-colors block leading-tight">
                 WISHORA
               </span>
-              <span className="text-[10px] font-mono tracking-widest text-accent uppercase block -mt-1">
+              <span className="text-[9px] font-mono tracking-widest text-accent uppercase block font-semibold">
                 CINEMATIC ENGINE
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Header Quick Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => {
                 setCreateWizardInitial(null);
                 setShowCreateWizard(true);
               }}
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-extrabold shadow-[0_0_20px_rgba(200,169,110,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
-              <Sparkles size={14} />
-              <span>Direct New Wish</span>
+              <Sparkles size={13} className="text-[#06060A] fill-[#06060A]" />
+              <span className="hidden sm:inline">Direct New Wish</span>
+              <span className="sm:hidden font-bold">New Wish</span>
             </button>
-          </div>
-        </header>
 
+            {user && (
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden border transition-all cursor-pointer p-0.5 flex-shrink-0 ${
+                  activeTab === 'profile'
+                    ? 'border-accent ring-2 ring-accent/40 scale-105'
+                    : 'border-white/[0.14] hover:border-accent/60'
+                }`}
+                title="Director Profile"
+              >
+                <img
+                  src={getAvatarUrl(user.display_name || 'Director', user.avatar_url, user.gender)}
+                  alt={user.display_name || 'Director'}
+                  className="w-full h-full object-cover rounded-[14px] bg-surface-elevated"
+                />
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main App Container */}
+      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 mb-24">
         {/* Tab Pages */}
         <main>
           {activeTab === 'home' && (
@@ -283,28 +310,31 @@ export function App() {
         </main>
       </div>
 
-      {/* Floating Bottom Navigation Bar */}
-      <nav className="fixed bottom-4 inset-x-0 z-40 max-w-md mx-auto px-4 pointer-events-none">
-        <div className="bg-surface-elevated/90 border border-white/[0.12] rounded-full p-2 backdrop-blur-2xl shadow-glass-card flex items-center justify-around pointer-events-auto">
+      {/* Floating Bottom Navigation Bar (Apple-Grade Responsive Dock) */}
+      <nav className="fixed bottom-3 sm:bottom-4 inset-x-0 z-40 max-w-sm sm:max-w-md mx-auto px-3 sm:px-4 pointer-events-none pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="bg-[#0B0B14]/90 border border-white/[0.14] rounded-full p-1.5 sm:p-2 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_25px_rgba(200,169,110,0.15)] flex items-center justify-around pointer-events-auto">
           {[
-            { key: 'home', label: 'Home', icon: <Home size={18} /> },
-            { key: 'wishbook', label: 'Wishbook', icon: <BookOpen size={18} /> },
-            { key: 'contacts', label: 'Contacts', icon: <Users size={18} /> },
-            { key: 'profile', label: 'Director', icon: <User size={18} /> },
-          ].map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActiveTab(item.key as any)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                activeTab === item.key
-                  ? 'bg-accent text-void shadow-glow-sm'
-                  : 'text-text-2 hover:text-text-1 hover:bg-white/[0.04]'
-              }`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          ))}
+            { key: 'home', label: 'Home', icon: <Home size={17} /> },
+            { key: 'wishbook', label: 'Wishbook', icon: <BookOpen size={17} /> },
+            { key: 'contacts', label: 'Contacts', icon: <Users size={17} /> },
+            { key: 'profile', label: 'Director', icon: <User size={17} /> },
+          ].map((item) => {
+            const isActive = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key as any)}
+                className={`relative flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  isActive
+                    ? 'bg-gradient-to-r from-amber-400 via-accent to-yellow-500 text-void shadow-[0_0_15px_rgba(200,169,110,0.5)] font-extrabold scale-[1.02]'
+                    : 'text-text-2 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                {item.icon}
+                <span className="text-[11px] tracking-tight">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </nav>
 

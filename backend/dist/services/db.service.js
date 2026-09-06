@@ -120,6 +120,15 @@ export function initDatabase() {
       duration REAL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS wish_versions (
+      id TEXT PRIMARY KEY,
+      wish_id TEXT REFERENCES wishes(id) ON DELETE CASCADE,
+      version_number INTEGER NOT NULL,
+      snapshot_data TEXT NOT NULL,
+      note TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
     // Migrate existing tables if columns missing
     try {
@@ -152,6 +161,14 @@ export function initDatabase() {
     catch (e) { }
     try {
         db.exec("ALTER TABLE wishes ADD COLUMN music_trim_end REAL DEFAULT 30");
+    }
+    catch (e) { }
+    try {
+        db.exec("ALTER TABLE wishes ADD COLUMN music_volume REAL DEFAULT 0.8");
+    }
+    catch (e) { }
+    try {
+        db.exec("ALTER TABLE wishes ADD COLUMN version INTEGER DEFAULT 1");
     }
     catch (e) { }
     try {

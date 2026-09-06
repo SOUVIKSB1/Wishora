@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact } from '../types/contact.js';
 import { Wish } from '../types/wish.js';
-import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck } from 'lucide-react';
+import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck, Share2, MessageCircle, ExternalLink, Check } from 'lucide-react';
 import { VelvetButton } from './ui/VelvetButton.js';
 import { GlowBadge } from './ui/GlowBadge.js';
 import confetti from 'canvas-confetti';
@@ -97,6 +97,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
     });
   };
 
+  const [copiedWishSlug, setCopiedWishSlug] = useState<string | null>(null);
+
+  const handleCopyShareLink = (slug: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/w/${slug}`);
+    setCopiedWishSlug(slug);
+    setTimeout(() => setCopiedWishSlug(null), 2000);
+  };
+
+  const handleFastShareWhatsApp = (w: Wish) => {
+    const shareUrl = `${window.location.origin}/w/${w.slug}`;
+    const text = encodeURIComponent(`✨ Happy Birthday ${w.recipient_name}! I directed a bespoke birthday film experience just for you: ${shareUrl}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
   const getRelationshipColor = (rel: string) => {
     const lower = (rel || '').toLowerCase();
     if (lower.includes('partner') || lower.includes('love') || lower.includes('spouse') || lower.includes('wife') || lower.includes('husband')) {
@@ -112,21 +126,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* ─── DIRECTOR COCKPIT HERO BANNER ─── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-surface-elevated via-[#10101c] to-[#14121f] border border-white/[0.16] p-6 sm:p-8 backdrop-blur-2xl overflow-hidden shadow-glass-card">
+      <div className="relative rounded-3xl bg-gradient-to-br from-surface-elevated via-[#10101c] to-[#14121f] border border-white/[0.16] p-5 sm:p-8 backdrop-blur-2xl overflow-hidden shadow-glass-card">
         {/* Spatial background glow */}
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-amber-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-cyan-500/15 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="max-w-xl space-y-2.5">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+          <div className="max-w-xl space-y-2">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-600/20 text-amber-300 border border-amber-400/35 text-[11px] font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(212,175,55,0.25)]">
-                <Sparkles size={12} className="animate-spin-slow" />
-                DIRECTOR SUITE 2.0
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <Sparkles size={12} className="animate-spin-slow text-amber-300" />
+                BESPOKE 90s BIRTHDAY CINEMA
               </span>
-              <span className="text-[11px] font-mono text-text-3 font-semibold hidden sm:inline">• CINEMATIC SPATIAL AUDIO</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight leading-tight">
@@ -134,93 +147,101 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </h1>
 
             <p className="text-xs sm:text-sm text-text-2 leading-relaxed font-medium">
-              3D interactive candlelight, dynamic historical milestone memory lane, physical polaroid flip albums, and real-time live webcam reaction capturing.
+              3D interactive candlelight, dynamic historical milestone memory lane, polaroid album, and live emotion capture.
             </p>
           </div>
 
-          <div className="flex flex-row sm:flex-col lg:flex-row items-center gap-3 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row lg:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 flex-shrink-0">
             <VelvetButton
               variant="glow"
               size="lg"
-              icon={<Sparkles size={18} />}
+              icon={<Sparkles size={16} />}
               onClick={onNewWish}
-              className="w-full sm:w-auto shadow-[0_0_35px_rgba(212,175,55,0.4)]"
+              className="w-full sm:w-auto shadow-[0_0_30px_rgba(212,175,55,0.35)] justify-center"
             >
               Direct New Wish
             </VelvetButton>
 
             <button
               onClick={() => onNavigateToTab('contacts')}
-              className="text-xs font-bold text-text-2 hover:text-white px-4 py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.15] transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+              className="text-xs font-bold text-text-2 hover:text-white px-4 py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.15] transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Calendar size={14} className="text-text-3" />
-              <span>Contacts ({contacts.length})</span>
+              <span>Calendar ({contacts.length})</span>
             </button>
           </div>
         </div>
+      </div>
 
-        {/* User's Personal Birthday Micro-HUD */}
-        {user?.user_dob && (
-          <div className="mt-6 pt-5 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div
-                onClick={isUserBirthdayToday ? triggerBirthdayConfetti : undefined}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
-                  isUserBirthdayToday
-                    ? 'bg-gradient-to-tr from-pink-500 to-amber-400 text-void border-pink-300 shadow-[0_0_20px_rgba(244,114,182,0.6)] cursor-pointer animate-bounce'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                }`}
-              >
-                <Cake size={20} />
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold text-amber-400 tracking-wider uppercase">
-                    DIRECTOR'S BIRTHDAY RADAR
-                  </span>
-                  {isUserBirthdayToday && (
-                    <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 text-[10px] font-bold animate-pulse">
-                      🎉 CELEBRATING TODAY
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-sm font-display font-bold text-white">
-                  {isUserBirthdayToday
-                    ? `Happy Birthday, ${user?.display_name || 'Director'}! Tap for confetti 🎊`
-                    : `Turning ${bdayInfo?.age_turning || 29} on ${bdayInfo?.birth_day || 20}/${bdayInfo?.birth_month || 5}`}
-                </h3>
-              </div>
+      {/* ─── DIRECTOR'S BIRTHDAY RADAR MICRO-HUD (ISOLATED & COMPACT) ─── */}
+      {user?.user_dob && (
+        <div
+          className={`relative bg-surface-elevated/90 border rounded-3xl p-4 sm:p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-glass-card transition-all ${
+            isUserBirthdayToday
+              ? 'border-pink-400/60 shadow-[0_0_30px_rgba(244,114,182,0.3)] bg-gradient-to-r from-pink-500/15 via-surface-elevated to-amber-500/15'
+              : 'border-white/[0.14] hover:border-amber-400/40'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              onClick={isUserBirthdayToday ? triggerBirthdayConfetti : undefined}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
+                isUserBirthdayToday
+                  ? 'bg-gradient-to-tr from-pink-500 to-amber-400 text-void border-pink-300 shadow-[0_0_15px_rgba(244,114,182,0.6)] cursor-pointer animate-bounce'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}
+            >
+              <Cake size={18} />
             </div>
 
-            {/* Radiant Countdown Numbers */}
-            <div className="flex items-center gap-2 bg-void/80 border border-white/[0.12] px-4 py-2 rounded-2xl backdrop-blur-md">
-              {[
-                { label: 'DAYS', val: personalTimeLeft.days },
-                { label: 'HRS', val: personalTimeLeft.hours },
-                { label: 'MIN', val: personalTimeLeft.minutes },
-                { label: 'SEC', val: personalTimeLeft.seconds },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-baseline gap-1">
-                  <span className="font-mono font-black text-white text-sm sm:text-base">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                  DIRECTOR'S BIRTHDAY RADAR
+                </span>
+                {isUserBirthdayToday && (
+                  <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 text-[9px] font-bold animate-pulse">
+                    🎉 TODAY
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white truncate">
+                {isUserBirthdayToday
+                  ? `Happy Birthday, ${user?.display_name || 'Director'}! Tap for confetti 🎊`
+                  : `Turning ${bdayInfo?.age_turning || 29} on ${bdayInfo?.birth_day || 20}/${bdayInfo?.birth_month || 5}`}
+              </h3>
+            </div>
+          </div>
+
+          {/* Compact Digital Countdown */}
+          <div className="flex items-center justify-center gap-1.5 bg-void/80 border border-white/[0.1] px-3.5 py-2 rounded-2xl backdrop-blur-md self-stretch sm:self-auto">
+            {[
+              { label: 'D', val: personalTimeLeft.days },
+              { label: 'H', val: personalTimeLeft.hours },
+              { label: 'M', val: personalTimeLeft.minutes },
+              { label: 'S', val: personalTimeLeft.seconds },
+            ].map((item, idx) => (
+              <React.Fragment key={idx}>
+                <div className="flex items-baseline gap-0.5">
+                  <span className="font-mono font-black text-white text-xs sm:text-sm">
                     {String(item.val).padStart(2, '0')}
                   </span>
                   <span className="font-mono text-[9px] text-amber-400 font-bold">{item.label}</span>
-                  {idx < 3 && <span className="text-white/20 text-xs font-mono ml-1">:</span>}
                 </div>
-              ))}
-            </div>
+                {idx < 3 && <span className="text-white/20 text-xs font-mono">:</span>}
+              </React.Fragment>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ─── JEWEL-TONED QUICK STATS GRID ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         {[
           {
             label: 'WISHES DIRECTED',
             val: stats?.total_wishes ?? wishes.length,
-            icon: <Film size={18} className="text-amber-300" />,
+            icon: <Film size={16} className="text-amber-300" />,
             glow: 'from-amber-500/20 to-yellow-600/5',
             border: 'hover:border-amber-400/50',
             action: () => onNavigateToTab('wishbook')
@@ -228,7 +249,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {
             label: 'TIMES OPENED',
             val: stats?.total_opens ?? 0,
-            icon: <Eye size={18} className="text-sky-300" />,
+            icon: <Eye size={16} className="text-sky-300" />,
             glow: 'from-sky-500/20 to-blue-600/5',
             border: 'hover:border-sky-400/50',
             action: () => onNavigateToTab('wishbook')
@@ -236,7 +257,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {
             label: 'REACTIONS CAPTURED',
             val: stats?.total_reactions ?? wishes.filter(w => !!w.reaction_url).length,
-            icon: <Video size={18} className="text-pink-300" />,
+            icon: <Video size={16} className="text-pink-300" />,
             glow: 'from-pink-500/20 to-rose-600/5',
             border: 'hover:border-pink-400/50',
             action: () => onNavigateToTab('wishbook')
@@ -244,7 +265,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {
             label: 'SAVED BIRTHDAYS',
             val: stats?.total_contacts ?? contacts.length,
-            icon: <Calendar size={18} className="text-emerald-300" />,
+            icon: <Calendar size={16} className="text-emerald-300" />,
             glow: 'from-emerald-500/20 to-teal-600/5',
             border: 'hover:border-emerald-400/50',
             action: () => onNavigateToTab('contacts')
@@ -253,21 +274,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div
             key={idx}
             onClick={item.action}
-            className={`relative bg-gradient-to-b ${item.glow} bg-surface-elevated border border-white/[0.12] ${item.border} rounded-2xl p-4 sm:p-5 backdrop-blur-xl cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-glass-card`}
+            className={`relative bg-gradient-to-b ${item.glow} bg-surface-elevated border border-white/[0.12] ${item.border} rounded-2xl p-3.5 sm:p-5 backdrop-blur-xl cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-glass-card`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-mono text-text-3 font-extrabold tracking-wider uppercase group-hover:text-text-1 transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[9px] sm:text-[10px] font-mono text-text-3 font-extrabold tracking-wider uppercase group-hover:text-text-1 transition-colors">
                 {item.label}
               </span>
-              <div className="p-2 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center">
                 {item.icon}
               </div>
             </div>
             <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-display font-black text-white font-mono">
+              <span className="text-2xl sm:text-3xl font-display font-black text-white font-mono">
                 {item.val}
               </span>
-              <span className="text-[11px] text-amber-400 font-mono font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+              <span className="text-[10px] text-amber-400 font-mono font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                 View →
               </span>
             </div>
@@ -299,9 +320,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {drafts.map(d => (
               <div
                 key={d.id}
-                className="bg-surface-elevated/90 border border-amber-500/35 hover:border-amber-400 rounded-3xl p-5 flex items-center justify-between gap-4 backdrop-blur-xl group transition-all shadow-glass-card"
+                className="bg-surface-elevated/90 border border-amber-500/35 hover:border-amber-400 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 backdrop-blur-xl group transition-all shadow-glass-card"
               >
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={getAvatarUrl(
                       d.recipient_name,
@@ -309,14 +330,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       (d as any).recipient_gender
                     )}
                     alt={d.recipient_name || 'Draft'}
-                    className="w-12 h-12 rounded-2xl object-cover bg-void border border-amber-400/40 flex-shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover bg-void border border-amber-400/40 flex-shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
                   />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-base font-bold text-white truncate group-hover:text-amber-400 transition-colors">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-amber-400 transition-colors">
                         {d.recipient_name || 'Untitled Draft'}
                       </h4>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 font-semibold uppercase">
+                      <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 font-semibold uppercase flex-shrink-0">
                         {(d as any).stage ? `Stage ${(d as any).stage}/5` : 'Draft'}
                       </span>
                     </div>
@@ -330,7 +351,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   size="sm"
                   variant="primary"
                   onClick={() => onSelectWish && onSelectWish(d)}
-                  className="flex-shrink-0 shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+                  className="flex-shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
                 >
                   Resume
                 </VelvetButton>
@@ -369,7 +390,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               return (
                 <div
                   key={c.id}
-                  className={`flex-shrink-0 w-64 bg-surface-elevated/95 border rounded-3xl p-5 flex flex-col justify-between gap-4 backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 ${
+                  className={`flex-shrink-0 w-60 sm:w-64 bg-surface-elevated/95 border rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 ${
                     isToday
                       ? 'border-amber-400 shadow-[0_0_30px_rgba(212,175,55,0.35)] bg-gradient-to-b from-amber-500/15 to-surface-elevated'
                       : 'border-white/[0.14] hover:border-white/[0.28] shadow-glass-card'
@@ -391,12 +412,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       <img
                         src={getAvatarUrl(c.name, c.avatar_url, c.gender)}
                         alt={c.name}
-                        className={`w-11 h-11 rounded-2xl object-cover bg-void flex-shrink-0 border ${
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover bg-void flex-shrink-0 border ${
                           isToday ? 'border-amber-400 shadow-[0_0_15px_rgba(212,175,55,0.4)]' : 'border-white/[0.14]'
                         }`}
                       />
                       <div className="min-w-0">
-                        <h3 className="text-base font-bold text-white truncate">{c.name}</h3>
+                        <h3 className="text-sm sm:text-base font-bold text-white truncate">{c.name}</h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${relStyle.dot}`} />
                           <p className="text-xs text-text-2 font-medium truncate">{c.relationship}</p>
@@ -410,7 +431,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     variant={isToday ? 'glow' : 'primary'}
                     icon={<Sparkles size={13} />}
                     onClick={() => onCreateWishForContact(c)}
-                    className="w-full font-bold cursor-pointer"
+                    className="w-full font-bold cursor-pointer justify-center"
                   >
                     Direct Wish
                   </VelvetButton>
@@ -426,13 +447,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Film size={18} className="text-amber-400" />
-            <h2 className="text-base sm:text-lg font-display font-bold text-white">Recent Cinematic Experiences</h2>
+            <h2 className="text-base sm:text-lg font-display font-bold text-white">Recent Experiences</h2>
           </div>
           <button
             onClick={() => onNavigateToTab('wishbook')}
             className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold cursor-pointer"
           >
-            <span>Wishbook Archive</span>
+            <span>Wishbook</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -446,9 +467,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             recentWishes.map(w => (
               <div
                 key={w.id}
-                className="bg-surface-elevated/90 border border-white/[0.14] hover:border-amber-400/50 rounded-3xl p-5 flex items-center justify-between gap-4 backdrop-blur-xl group transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card"
+                className="bg-surface-elevated/90 border border-white/[0.14] hover:border-amber-400/50 rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3 backdrop-blur-xl group transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card"
               >
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={getAvatarUrl(
                       w.recipient_name,
@@ -456,14 +477,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       (w as any).recipient_gender
                     )}
                     alt={w.recipient_name}
-                    className="w-12 h-12 rounded-2xl object-cover bg-void border border-white/[0.16] flex-shrink-0 group-hover:scale-105 transition-transform"
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover bg-void border border-white/[0.16] flex-shrink-0 group-hover:scale-105 transition-transform"
                   />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-base font-bold text-white truncate group-hover:text-amber-400 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-amber-400 transition-colors">
                         {w.recipient_name}
                       </h4>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.08] text-text-2 font-semibold uppercase">
+                      <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.08] text-text-2 font-semibold uppercase flex-shrink-0">
                         {w.theme || 'Cinematic'}
                       </span>
                     </div>
@@ -473,13 +494,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={() => onPreviewExperience(w.slug)}
-                  className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] font-body font-black text-xs shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                >
-                  <Play size={12} className="fill-[#06060A]" />
-                  <span>Experience</span>
-                </button>
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleFastShareWhatsApp(w)}
+                      className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 transition-all cursor-pointer"
+                      title="Share on WhatsApp"
+                    >
+                      <MessageCircle size={13} />
+                    </button>
+
+                    <button
+                      onClick={() => handleCopyShareLink(w.slug)}
+                      className="p-2 rounded-xl bg-white/[0.08] border border-white/[0.12] text-text-2 hover:text-white hover:bg-white/[0.15] transition-all cursor-pointer flex items-center gap-1 text-xs"
+                      title="Copy sealed link"
+                    >
+                      {copiedWishSlug === w.slug ? <Check size={13} className="text-emerald-400" /> : <ExternalLink size={13} />}
+                      <span className="text-[10px] font-mono font-bold">{copiedWishSlug === w.slug ? 'Copied' : 'Link'}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => onPreviewExperience(w.slug)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] font-body font-black text-xs shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Play size={12} className="fill-[#06060A]" />
+                    <span>Play Film</span>
+                  </button>
+                </div>
               </div>
             ))
           )}

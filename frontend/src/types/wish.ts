@@ -27,6 +27,9 @@ export interface Wish {
   custom_music_url?: string;
   music_trim_start: number;
   music_trim_end: number;
+  music_volume?: number;
+  version?: number;
+  version_count?: number;
   status: 'draft' | 'generated' | 'scheduled' | 'sent';
   scheduled_for?: string;
   open_count: number;
@@ -46,6 +49,19 @@ export interface Wish {
   birth_year?: number;
   sender_name?: string;
   sender_avatar?: string;
+}
+
+export interface WishVersion {
+  id: string;
+  wish_id: string;
+  version_number: number;
+  snapshot_data?: string;
+  snapshot?: {
+    wish: Wish;
+    photos: WishPhoto[];
+  };
+  note?: string;
+  created_at: string;
 }
 
 export interface Milestone {

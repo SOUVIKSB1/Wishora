@@ -206,3 +206,59 @@ function generateLocalizedWishes(name, age, gender, rel, lang) {
             ];
     }
 }
+export async function generatePhotoCaptions(params) {
+    const { name, relationship = 'Friend', count } = params;
+    const captionTemplates = [
+        `Radiant smiles & timeless memories with ${name} ✨`,
+        `Another unforgettable chapter in the story of us 🥂`,
+        `Pure sunshine and authentic moments with my favorite person 💖`,
+        `Celebrating the extraordinary soul that you are, ${name} 🌟`,
+        `Through every season, your light always shines brightest 💫`,
+        `Golden hour energy with the one and only ${name} 📸`,
+        `Unfiltered joy and laughter that will last forever 🎈`,
+        `To the bond we share and the adventures yet to come 🚀`,
+        `A heart full of gratitude for having you in my life ❤️`,
+        `Forever capturing the magic of our journey together 🌸`,
+        `Here's to the moments that take our breath away 🎂`,
+        `Always my favorite partner in crime and celebration 🎉`
+    ];
+    // If Anthropic API is available, generate bespoke captions
+    if (process.env.ANTHROPIC_API_KEY) {
+        try {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': process.env.ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-5-sonnet-20241022',
+                    max_tokens: 600,
+                    messages: [{
+                            role: 'user',
+                            content: `Generate ${count} short, touching, cinematic photo captions (1 sentence each, with 1-2 emojis) for a birthday album for ${name} (${relationship}).
+Format: JSON array of strings only. Example: ["Caption 1 ✨", "Caption 2 💖"]`
+                        }]
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const textContent = data.content?.[0]?.text || '';
+                const jsonMatch = textContent.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(parsed) && parsed.length >= count) {
+                        return parsed.slice(0, count);
+                    }
+                }
+            }
+        }
+        catch (e) {
+            console.warn('AI API failed for photo captions, using smart template engine:', e);
+        }
+    }
+    // Shuffle & pick templates
+    const shuffled = [...captionTemplates].sort(() => 0.5 - Math.random());
+    return Array.from({ length: count }, (_, i) => shuffled[i % shuffled.length]);
+}

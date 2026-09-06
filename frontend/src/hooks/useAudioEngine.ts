@@ -7,6 +7,7 @@ export function useAudioEngine() {
   const timerRef = useRef<number | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentVolumeRef = useRef<number>(0.8);
 
   const initAudioCtx = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -14,7 +15,7 @@ export function useAudioEngine() {
       if (AudioCtx) {
         audioCtxRef.current = new AudioCtx();
         gainNodeRef.current = audioCtxRef.current.createGain();
-        gainNodeRef.current.gain.value = 0.35;
+        gainNodeRef.current.gain.value = 0.35 * currentVolumeRef.current;
         gainNodeRef.current.connect(audioCtxRef.current.destination);
       }
     }
@@ -38,15 +39,16 @@ export function useAudioEngine() {
     setIsPlaying(false);
   }, []);
 
-  const playSynthTheme = useCallback((themePreset: string = 'synth://golden_hour') => {
+  const playSynthTheme = useCallback((themePreset: string = 'synth://golden_hour', volume: number = 0.8) => {
     stop();
+    currentVolumeRef.current = Math.max(0, Math.min(1, volume));
 
     // 1. If it's a real audio file (Data URL or HTTP web URL)
     if (themePreset && (themePreset.startsWith('data:audio') || themePreset.startsWith('http://') || themePreset.startsWith('https://') || themePreset.startsWith('blob:'))) {
       try {
         const audio = new Audio(themePreset);
         audio.loop = true;
-        audio.volume = isMuted ? 0 : 0.6;
+        audio.volume = isMuted ? 0 : currentVolumeRef.current;
         htmlAudioRef.current = audio;
         setIsPlaying(true);
         audio.play().catch(err => {
@@ -65,7 +67,7 @@ export function useAudioEngine() {
     setIsPlaying(true);
     const ctx = audioCtxRef.current;
     const masterGain = gainNodeRef.current;
-    masterGain.gain.value = isMuted ? 0 : 0.32;
+    masterGain.gain.value = isMuted ? 0 : 0.35 * currentVolumeRef.current;
 
     const presetLower = (themePreset || '').toLowerCase();
 
@@ -248,7 +250,7 @@ export function useAudioEngine() {
   const toggleMute = useCallback(() => {
     if (htmlAudioRef.current) {
       if (isMuted) {
-        htmlAudioRef.current.volume = 0.6;
+        htmlAudioRef.current.volume = currentVolumeRef.current;
         setIsMuted(false);
       } else {
         htmlAudioRef.current.volume = 0;
@@ -256,7 +258,7 @@ export function useAudioEngine() {
       }
     } else if (gainNodeRef.current) {
       if (isMuted) {
-        gainNodeRef.current.gain.value = 0.32;
+        gainNodeRef.current.gain.value = 0.35 * currentVolumeRef.current;
         setIsMuted(false);
       } else {
         gainNodeRef.current.gain.value = 0;
