@@ -80,6 +80,9 @@ export function App() {
         setStats(authRes.stats);
         setIsAuthenticated(true);
         setShowAuthModal(false);
+        if (authRes.user.role === 'admin') {
+          setActiveTab('admin');
+        }
       } else {
         setIsAuthenticated(false);
         setShowAuthModal(true);
@@ -99,6 +102,9 @@ export function App() {
     setUser(authenticatedUser);
     setIsAuthenticated(true);
     setShowAuthModal(false);
+    if (authenticatedUser?.role === 'admin') {
+      setActiveTab('admin');
+    }
     loadInitialData();
   };
 
@@ -223,16 +229,16 @@ export function App() {
             {/* Admin Badge/Access if Admin */}
             {user?.role === 'admin' && (
               <button
-                onClick={() => setActiveTab('admin')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                onClick={() => setActiveTab(activeTab === 'admin' ? 'home' : 'admin')}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
                   activeTab === 'admin'
-                    ? 'bg-amber-400/25 border-amber-400 text-amber-300 shadow-[0_0_15px_rgba(212,175,55,0.4)]'
-                    : 'bg-white/[0.06] border-white/[0.14] text-text-2 hover:border-amber-400/40 hover:text-white'
+                    ? 'bg-amber-400 text-void border-amber-400 font-extrabold shadow-[0_0_20px_rgba(212,175,55,0.5)] scale-105'
+                    : 'bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30'
                 }`}
-                title="Master Admin Panel"
+                title="Master Admin Controls"
               >
-                <ShieldCheck size={14} className="text-amber-400" />
-                <span className="hidden sm:inline">Admin Panel</span>
+                <ShieldCheck size={14} />
+                <span>{activeTab === 'admin' ? 'Exit Admin' : 'Admin Controls'}</span>
               </button>
             )}
 
@@ -251,18 +257,6 @@ export function App() {
                 )}
               </button>
             )}
-
-            <button
-              onClick={() => {
-                setCreateWizardInitial(null);
-                setShowCreateWizard(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
-            >
-              <Sparkles size={13} className="text-[#06060A] fill-[#06060A]" />
-              <span className="hidden sm:inline">Direct New Wish</span>
-              <span className="sm:hidden font-bold">New Wish</span>
-            </button>
 
             {user && (
               <button

@@ -144,8 +144,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" opacity={0.75} />
         <AuraHalfCircle position="bottom-left" variant="cyan-emerald" size="md" opacity={0.5} />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-2 min-w-0">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2 min-w-0 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-xs font-mono text-amber-300">
               <Sparkles size={13} className="text-amber-400 animate-spin-slow" />
               <span>{getGreeting()}, {firstName} ✨</span>
@@ -155,36 +155,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
               Direct bespoke <span className="gold-gradient-text">birthday experiences</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-text-2 font-medium max-w-lg leading-relaxed">
+            <p className="text-xs sm:text-sm text-text-2 font-medium leading-relaxed">
               Create interactive 3D blow-candle cakes, nostalgic memory reels, soundscapes, and capture live video reactions.
             </p>
-          </div>
-
-          {/* Clean, sleek modern quick-action buttons */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap flex-shrink-0">
-            <button
-              onClick={onNewWish}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_25px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
-            >
-              <Plus size={16} className="text-[#06060A]" />
-              <span>Create New Wish</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('contacts')}
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
-            >
-              <Users size={15} className="text-sky-400" />
-              <span>Contacts</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('wishbook')}
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
-            >
-              <BookOpen size={15} className="text-amber-400" />
-              <span>Wishbook</span>
-            </button>
           </div>
         </div>
       </div>
