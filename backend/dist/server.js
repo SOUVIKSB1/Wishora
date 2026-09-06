@@ -13,6 +13,7 @@ import { aiRoutes } from './routes/ai.routes.js';
 import { musicRoutes } from './routes/music.routes.js';
 import { foldersRoutes } from './routes/folders.routes.js';
 import { authRoutes } from './routes/auth.routes.js';
+import { adminRoutes } from './routes/admin.routes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const server = Fastify({
@@ -39,6 +40,7 @@ async function main() {
     });
     // Register API Routes
     await server.register(authRoutes, { prefix: '/api/v1' });
+    await server.register(adminRoutes, { prefix: '/api/v1' });
     await server.register(contactsRoutes, { prefix: '/api/v1' });
     await server.register(wishesRoutes, { prefix: '/api/v1' });
     await server.register(aiRoutes, { prefix: '/api/v1' });

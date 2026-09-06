@@ -118,7 +118,46 @@ export const api = {
 
   // Public Experience
   getPublicWish: (slug: string) => fetchApi<any>(`/w/${slug}`),
-  logOpen: (slug: string) => fetchApi<any>(`/w/${slug}/open`, { method: 'POST' }),
-  submitReaction: (slug: string, data: { media_url?: string; type?: string; duration?: number; message_text?: string }) =>
-    fetchApi<any>(`/w/${slug}/react`, { method: 'POST', body: JSON.stringify(data) }),
+  logOpen: (slug: string) => fetchApi<{ success: boolean }>(`/w/${slug}/open`, { method: 'POST' }),
+  logWishOpen: (slug: string) => fetchApi<{ success: boolean }>(`/w/${slug}/open`, { method: 'POST' }),
+  submitReaction: (slug: string, data: { type: string; media_url?: string; message_text?: string; duration?: number }) => 
+    fetchApi<{ success: boolean; reactionId: string }>(`/w/${slug}/react`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Google Onboarding Complete
+  googleComplete: async (data: { email: string; google_id?: string; display_name?: string; avatar_url?: string; user_dob: string; gender: string }) => {
+    const res = await fetchApi<{ user: any; token: string }>('/auth/google-complete', { method: 'POST', body: JSON.stringify(data) });
+    if (res.token) setAuthToken(res.token);
+    return res;
+  },
+
+  // Templates
+  getTemplates: () => fetchApi<{ templates: any[] }>('/templates'),
+
+  // Notifications
+  getNotifications: () => fetchApi<{ notifications: any[] }>('/auth/notifications'),
+  markNotificationRead: (id: string) => fetchApi<{ success: boolean }>(`/auth/notifications/${id}/read`, { method: 'POST' }),
+
+  // Admin Controls
+  getAdminStats: () => fetchApi<{ stats: any }>('/admin/stats'),
+  getAdminUsers: () => fetchApi<{ users: any[]; total: number }>('/admin/users'),
+  updateUserPlan: (id: string, plan: string) => fetchApi<{ success: boolean; user: any }>(`/admin/users/${id}/plan`, { method: 'PUT', body: JSON.stringify({ plan }) }),
+  updateUserRole: (id: string, role: string) => fetchApi<{ success: boolean; user: any }>(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  deleteUser: (id: string) => fetchApi<{ success: boolean; message: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
+
+  getAdminMusic: () => fetchApi<{ tracks: any[] }>('/admin/music'),
+  addAdminMusic: (data: { title: string; artist?: string; genre?: string; mood_tags?: string[]; storage_url: string; duration?: number; is_premium?: boolean }) =>
+    fetchApi<{ success: boolean; track: any }>('/admin/music', { method: 'POST', body: JSON.stringify(data) }),
+  deleteAdminMusic: (id: string) => fetchApi<{ success: boolean; id: string }>(`/admin/music/${id}`, { method: 'DELETE' }),
+
+  getAdminTemplates: () => fetchApi<{ templates: any[] }>('/admin/templates'),
+  createAdminTemplate: (data: { title: string; content: string; category?: string; tone?: string; language?: string; is_premium?: boolean }) =>
+    fetchApi<{ success: boolean; template: any }>('/admin/templates', { method: 'POST', body: JSON.stringify(data) }),
+  updateAdminTemplate: (id: string, data: any) =>
+    fetchApi<{ success: boolean; template: any }>(`/admin/templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAdminTemplate: (id: string) => fetchApi<{ success: boolean; id: string }>(`/admin/templates/${id}`, { method: 'DELETE' }),
+
+  getAdminNotifications: () => fetchApi<{ notifications: any[] }>('/admin/notifications'),
+  sendAdminNotification: (data: { title: string; message: string; user_id?: string | null; type?: string }) =>
+    fetchApi<{ success: boolean; notification: any; recipient_type: string }>('/admin/notifications', { method: 'POST', body: JSON.stringify(data) }),
+  deleteAdminNotification: (id: string) => fetchApi<{ success: boolean; id: string }>(`/admin/notifications/${id}`, { method: 'DELETE' }),
 };

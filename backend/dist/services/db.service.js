@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 const dataDir = path.resolve(process.cwd(), 'data');
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
@@ -10,6 +11,9 @@ const dbPath = path.join(dataDir, 'wishora.db');
 export const db = new Database(dbPath);
 // Enable WAL mode for high performance
 db.pragma('journal_mode = WAL');
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
 export function initDatabase() {
     db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -22,6 +26,7 @@ export function initDatabase() {
       user_dob TEXT DEFAULT '2000-01-01',
       google_id TEXT UNIQUE,
       auth_provider TEXT DEFAULT 'local',
+      role TEXT DEFAULT 'user',
       plan TEXT DEFAULT 'free',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -82,6 +87,8 @@ export function initDatabase() {
       custom_music_url TEXT,
       music_trim_start REAL DEFAULT 0,
       music_trim_end REAL DEFAULT 30,
+      music_volume REAL DEFAULT 0.8,
+      version INTEGER DEFAULT 1,
       status TEXT DEFAULT 'draft',
       scheduled_for DATETIME,
       expires_at DATETIME,
@@ -129,6 +136,27 @@ export function initDatabase() {
       note TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS wish_templates (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      category TEXT DEFAULT 'heartfelt',
+      tone TEXT DEFAULT 'warm',
+      language TEXT DEFAULT 'en',
+      is_premium INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS system_notifications (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT DEFAULT 'announcement',
+      is_read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
     // Migrate existing tables if columns missing
     try {
@@ -145,6 +173,10 @@ export function initDatabase() {
     catch (e) { }
     try {
         db.exec("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'");
+    }
+    catch (e) { }
+    try {
+        db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
     }
     catch (e) { }
     try {
@@ -180,6 +212,8 @@ export function initDatabase() {
     }
     catch (e) { }
     seedMusicTracksOnly();
+    seedWishTemplates();
+    ensureAdminUser();
 }
 function seedMusicTracksOnly() {
     const musicCount = db.prepare('SELECT COUNT(*) as count FROM music_tracks').get();
@@ -194,6 +228,44 @@ function seedMusicTracksOnly() {
         musicStmt.run('trk_4', 'Romantic Velvet Acoustic', 'Luna Strings', 85, 'Acoustic', JSON.stringify(['romantic', 'sweet', 'intimate']), 'synth://velvet_acoustic', 0);
         musicStmt.run('trk_5', 'Bollywood Celebration Dhol', 'Desi Vibes', 95, 'Bollywood', JSON.stringify(['festive', 'dance', 'high-energy']), 'synth://bollywood_dhol', 0);
         musicStmt.run('trk_6', 'Celestial Ambient Dreams', 'Cosmic Echo', 100, 'Ambient', JSON.stringify(['dreamy', 'ethereal', 'deep']), 'synth://celestial_ambient', 1);
+    }
+}
+function seedWishTemplates() {
+    const count = db.prepare('SELECT COUNT(*) as count FROM wish_templates').get();
+    if (count.count === 0) {
+        const stmt = db.prepare(`
+      INSERT INTO wish_templates (id, title, content, category, tone, language, is_premium)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+        stmt.run('tpl_1', 'Heartfelt Journey & Magic', 'Happy Birthday! May this year bring you boundless joy, golden opportunities, and unforgettable adventures. You illuminate every room you enter, and I am so grateful to celebrate you today.', 'heartfelt', 'warm', 'en', 0);
+        stmt.run('tpl_2', 'Playful & Joyful Banter', 'Happy Birthday to someone who is aging like fine wine—and getting funnier by the minute! May your cake be huge, your candles many, and your year utterly extraordinary.', 'playful', 'humorous', 'en', 0);
+        stmt.run('tpl_3', 'Deep Poetic Nostalgia', 'Like constellations tracing through the night, every memory we share shines with timeless beauty. Wishing you a birthday as magnificent and radiant as your soul.', 'poetic', 'nostalgic', 'en', 0);
+        stmt.run('tpl_4', 'Milestone Grandeur', 'Celebrating an incredible milestone today! Here is to the wisdom of the past, the joy of today, and all the grand chapters waiting to unfold. Cheers to your brilliance!', 'milestone', 'inspirational', 'en', 0);
+        stmt.run('tpl_5', 'Romantic Starlight Melody', 'To the one who makes my world spin with starlight and wonder: Happy Birthday, my love. Every moment by your side is a gift, and today I celebrate everything that makes you you.', 'romantic', 'intimate', 'en', 1);
+        stmt.run('tpl_6', 'Best Friend Forever', 'Happy Birthday to my partner-in-crime, confidant, and favorite human! Thanks for always being one call away and making life so much brighter. Let us make this year iconic!', 'friendship', 'upbeat', 'en', 0);
+    }
+}
+function ensureAdminUser() {
+    const adminEmail = 'souvik@admin.com';
+    const existing = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(adminEmail);
+    const passHash = hashPassword('123456@St');
+    if (!existing) {
+        const adminId = 'usr_admin_master';
+        db.prepare(`
+      INSERT INTO users (id, email, password_hash, display_name, role, plan, gender, user_dob, auth_provider)
+      VALUES (?, ?, ?, 'Souvik Admin', 'admin', 'vip', 'male', '1998-01-01', 'local')
+    `).run(adminId, adminEmail, passHash);
+        createDefaultUserFolders(adminId);
+    }
+    else {
+        // Ensure admin credentials and role are guaranteed
+        db.prepare(`
+      UPDATE users SET
+        password_hash = ?,
+        role = 'admin',
+        plan = 'vip'
+      WHERE LOWER(email) = ?
+    `).run(passHash, adminEmail);
     }
 }
 export function createDefaultUserFolders(userId) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact } from '../types/contact.js';
 import { Wish } from '../types/wish.js';
-import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck, Share2, MessageCircle, ExternalLink, Check, Crown } from 'lucide-react';
+import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck, Share2, MessageCircle, ExternalLink, Check, Crown, BookOpen, Users } from 'lucide-react';
 import { VelvetButton } from './ui/VelvetButton.js';
 import { GlowBadge } from './ui/GlowBadge.js';
 import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
@@ -126,59 +126,64 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return { variant: 'gold' as const, dot: 'bg-amber-400' };
   };
 
+  // Time-aware greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const firstName = (user?.display_name || 'Friend').split(' ')[0];
+
   return (
     <div className="space-y-6 sm:space-y-7">
-      {/* ─── SLEEK DIRECTOR EXECUTIVE COMMAND BAR ─── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-[#12101c] via-[#0d0d16] to-[#15111f] border border-white/[0.14] p-5 sm:p-6 backdrop-blur-2xl overflow-hidden shadow-glass-card group">
-        {/* Animated soothing half-circle corner auras */}
-        <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" />
-        <AuraHalfCircle position="bottom-left" variant="cyan-emerald" size="md" opacity={0.6} />
+      {/* ─── CLEAN & ELEGANT ANIMATED HERO GREETING ─── */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-[#12101e] via-[#0b0914] to-[#151124] border border-white/[0.12] p-5 sm:p-7 backdrop-blur-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.6)] group">
+        {/* Animated eye-soothing half-circle corner auras */}
+        <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" opacity={0.75} />
+        <AuraHalfCircle position="bottom-left" variant="cyan-emerald" size="md" opacity={0.5} />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[10px] font-mono font-bold tracking-widest uppercase shadow-[0_0_12px_rgba(212,175,55,0.2)]">
-                <Sparkles size={11} className="text-amber-300 animate-spin-slow" />
-                DIRECTOR SUITE
-              </span>
-              <span className="text-[10px] font-mono text-text-3 font-semibold">
-                • {wishes.length} Films Created
-              </span>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-xs font-mono text-amber-300">
+              <Sparkles size={13} className="text-amber-400 animate-spin-slow" />
+              <span>{getGreeting()}, {firstName} ✨</span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-white tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight leading-tight">
               Direct bespoke <span className="gold-gradient-text">birthday experiences</span>
             </h1>
 
             <p className="text-xs sm:text-sm text-text-2 font-medium max-w-lg leading-relaxed">
-              Direct 3D interactive cakes, milestone time capsules, polaroid reels, and soundscapes.
+              Create interactive 3D blow-candle cakes, nostalgic memory reels, soundscapes, and capture live video reactions.
             </p>
           </div>
 
-          {/* Sleek action pills */}
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap flex-shrink-0">
+          {/* Clean, sleek modern quick-action buttons */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap flex-shrink-0">
             <button
               onClick={onNewWish}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_25px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
-              <Sparkles size={14} className="text-[#06060A] fill-[#06060A]" />
-              <span>Direct Wish</span>
-            </button>
-
-            <button
-              onClick={() => onNavigateToTab('wishbook')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
-            >
-              <Film size={13} className="text-amber-400" />
-              <span>Wishbook</span>
+              <Plus size={16} className="text-[#06060A]" />
+              <span>Create New Wish</span>
             </button>
 
             <button
               onClick={() => onNavigateToTab('contacts')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
             >
-              <Calendar size={13} className="text-sky-400" />
-              <span>Calendar</span>
+              <Users size={15} className="text-sky-400" />
+              <span>Contacts</span>
+            </button>
+
+            <button
+              onClick={() => onNavigateToTab('wishbook')}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-amber-400" />
+              <span>Wishbook</span>
             </button>
           </div>
         </div>

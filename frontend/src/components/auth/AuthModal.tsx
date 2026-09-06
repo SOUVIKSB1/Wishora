@@ -91,7 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSuccess }) => {
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await api.googleLogin({
+      const res = await api.googleComplete({
         email: googleProfile.email,
         google_id: googleProfile.uid,
         display_name: displayName.trim() || googleProfile.displayName,
