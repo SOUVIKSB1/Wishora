@@ -1,14 +1,15 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, UserCredential } from 'firebase/auth';
 
-// Standard Firebase web configuration using Vite env vars
+// Firebase web configuration using Vite env vars with fallback to configured project keys
 const firebaseConfig = {
-  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || 'AIzaSyDemoKeyWishoraBirthdayApp2026',
-  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || 'wishora-birthday.firebaseapp.com',
-  projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || 'wishora-birthday',
-  storageBucket: (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET || 'wishora-birthday.appspot.com',
-  messagingSenderId: (import.meta as any).env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789012',
-  appId: (import.meta as any).env?.VITE_FIREBASE_APP_ID || '1:123456789012:web:abcdef123456',
+  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || 'AIzaSyD0i2lQvAaUmid5qb4n3xUd0uNDACI1xfo',
+  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || 'wishora-ea7db.firebaseapp.com',
+  projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || 'wishora-ea7db',
+  storageBucket: (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET || 'wishora-ea7db.firebasestorage.app',
+  messagingSenderId: (import.meta as any).env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '535942142332',
+  appId: (import.meta as any).env?.VITE_FIREBASE_APP_ID || '1:535942142332:web:b12e52c71c792a15a1ecf9',
+  measurementId: (import.meta as any).env?.VITE_FIREBASE_MEASUREMENT_ID || 'G-3BQQ5BLL9X',
 };
 
 // Initialize Firebase App singleton safely
