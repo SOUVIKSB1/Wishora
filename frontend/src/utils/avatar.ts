@@ -303,22 +303,70 @@ export function getAvatarUrl(name: string, customUrl?: string | null, gender?: s
 }
 
 /**
- * Helper to convert an uploaded image File into a base64 Data URL.
+ * Smartly compresses, scales down, and converts any uploaded image file to a lightweight, crystal-clear Data URL (WebP/JPEG max 1200px, ~120KB).
  */
-export function readFileAsDataUrl(file: File): Promise<string> {
+export function compressAndReadFileAsDataUrl(file: File, maxDimension: number = 1200, quality: number = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (file.size > 4 * 1024 * 1024) {
-      reject(new Error('Image must be smaller than 4MB'));
+    // If SVG, read as text / data URL directly
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-      resolve(reader.result as string);
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Try WebP, fallback to JPEG
+        let dataUrl = canvas.toDataURL('image/webp', quality);
+        if (!dataUrl.startsWith('data:image/webp')) {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = () => {
+        resolve(e.target?.result as string);
+      };
+      img.src = e.target?.result as string;
     };
-    reader.onerror = (err) => {
-      reject(err);
-    };
+    reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Helper to convert an uploaded image File into a base64 Data URL with automatic smart compression.
+ */
+export function readFileAsDataUrl(file: File): Promise<string> {
+  return compressAndReadFileAsDataUrl(file, 1200, 0.85);
+}
+

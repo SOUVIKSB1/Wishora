@@ -57,6 +57,16 @@ export const AlbumScreen: React.FC<AlbumScreenProps> = ({
   const [loveCounts, setLoveCounts] = useState<Record<number, number>>({});
   const [lightHighlight, setLightHighlight] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
 
+  // Instant photo preloading for snappy swiping
+  useEffect(() => {
+    validPhotos.forEach((p) => {
+      if (p.storage_url) {
+        const img = new window.Image();
+        img.src = p.storage_url;
+      }
+    });
+  }, [validPhotos]);
+
   // 3D Tilt Lerp
   const [tiltTarget, setTiltTarget] = useState<{ rotX: number; rotY: number }>({ rotX: 0, rotY: 0 });
   const [currentTilt, setCurrentTilt] = useState<{ rotX: number; rotY: number }>({ rotX: 0, rotY: 0 });

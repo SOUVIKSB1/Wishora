@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Image, Plus, Trash2, Sparkles, Star, MoveUp, MoveDown, UploadCloud, Link2 } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
+import { compressAndReadFileAsDataUrl } from '../../utils/avatar.js';
 
 interface PhotoItem {
   id: string;
@@ -25,36 +26,35 @@ const CURATED_SAMPLE_PHOTOS = [
 export const StepPhotos: React.FC<StepPhotosProps> = ({ photos, onChange }) => {
   const [customUrl, setCustomUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const processFiles = (files: FileList | File[]) => {
+  const processFiles = async (files: FileList | File[]) => {
     const remainingSlots = 12 - photos.length;
     if (remainingSlots <= 0) return;
 
-    const filesToProcess = Array.from(files).slice(0, remainingSlots);
-    const newPhotos: PhotoItem[] = [];
+    const filesToProcess = Array.from(files).slice(0, remainingSlots).filter(f => f.type.startsWith('image/'));
+    if (filesToProcess.length === 0) return;
 
-    let processed = 0;
-    filesToProcess.forEach(file => {
-      if (!file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        if (dataUrl) {
-          newPhotos.push({
-            id: `p_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-            storage_url: dataUrl,
-            caption: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-            is_featured: (photos.length === 0 && newPhotos.length === 0) ? 1 : 0
-          });
-        }
-        processed++;
-        if (processed === filesToProcess.length) {
-          onChange([...photos, ...newPhotos]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    setIsProcessing(true);
+    try {
+      const compressedUrls = await Promise.all(
+        filesToProcess.map(file => compressAndReadFileAsDataUrl(file, 1200, 0.85))
+      );
+
+      const newPhotos: PhotoItem[] = compressedUrls.map((url, idx) => ({
+        id: `p_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_${idx}`,
+        storage_url: url,
+        caption: filesToProcess[idx].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+        is_featured: (photos.length === 0 && idx === 0) ? 1 : 0
+      }));
+
+      onChange([...photos, ...newPhotos]);
+    } catch (err) {
+      console.error('Error processing photos:', err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

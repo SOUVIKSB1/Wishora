@@ -28,6 +28,44 @@ interface YearEvent {
 
 const KEY_BIRTHDAYS = [1, 5, 10, 13, 16, 18, 21, 25, 30, 40, 50, 60, 70, 80, 90, 100];
 
+export function getSmartTimelineYears(birthYear: number, currentAge: number): number[] {
+  const currentYear = birthYear + currentAge;
+  if (currentAge <= 12) {
+    const list: number[] = [];
+    for (let y = birthYear; y <= currentYear; y++) {
+      list.push(y);
+    }
+    return list;
+  }
+
+  const milestones = new Set<number>();
+  milestones.add(birthYear); // Age 0: The Arrival
+
+  if (currentAge >= 5) milestones.add(birthYear + 5); // Childhood
+  if (currentAge >= 10) milestones.add(birthYear + 10); // First Decade
+  if (currentAge >= 16 && currentAge < 18) milestones.add(birthYear + 16);
+  if (currentAge >= 18) milestones.add(birthYear + 18); // Adulthood
+  if (currentAge >= 21) milestones.add(birthYear + 21); // Golden Milestone
+  if (currentAge >= 25 && currentAge < 35) milestones.add(birthYear + 25);
+  if (currentAge >= 30) milestones.add(birthYear + 30);
+  if (currentAge >= 40) milestones.add(birthYear + 40);
+  if (currentAge >= 50) milestones.add(birthYear + 50);
+  if (currentAge >= 60) milestones.add(birthYear + 60);
+
+  milestones.add(currentYear); // Today
+
+  let sorted = Array.from(milestones).sort((a, b) => a - b);
+  if (sorted.length > 6) {
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const middle = sorted.slice(1, sorted.length - 1);
+    const step = Math.ceil(middle.length / 4);
+    const sampledMiddle = middle.filter((_, idx) => idx % step === 0);
+    sorted = [first, ...sampledMiddle, last];
+  }
+  return sorted;
+}
+
 export const TimelineScreen: React.FC<TimelineScreenProps> = ({
   recipientName,
   birthYear = 1998,
@@ -38,14 +76,10 @@ export const TimelineScreen: React.FC<TimelineScreenProps> = ({
   const currentYear = birthYear + currentAge;
   const firstName = recipientName ? recipientName.trim().split(' ')[0] : 'Friend';
 
-  // Build array of all years
+  // Build smart curated array of milestone years
   const allYears = useMemo(() => {
-    const list: number[] = [];
-    for (let y = birthYear; y <= currentYear; y++) {
-      list.push(y);
-    }
-    return list;
-  }, [birthYear, currentYear]);
+    return getSmartTimelineYears(birthYear, currentAge);
+  }, [birthYear, currentAge]);
 
   const [activeYearIndex, setActiveYearIndex] = useState<number>(0);
   const [expandedYear, setExpandedYear] = useState<number | null>(allYears[0]);
@@ -78,7 +112,7 @@ export const TimelineScreen: React.FC<TimelineScreenProps> = ({
     }
   };
 
-  // Slower, graceful dynamic journey progression (4.8s per year)
+  // Graceful, snappy dynamic journey progression (3.2s per milestone)
   useEffect(() => {
     if (!isPlaying || prefersReduced) return;
     const timer = setInterval(() => {
@@ -91,7 +125,7 @@ export const TimelineScreen: React.FC<TimelineScreenProps> = ({
         setExpandedYear(allYears[next]);
         return next;
       });
-    }, 4800);
+    }, 3200);
     return () => clearInterval(timer);
   }, [isPlaying, allYears, prefersReduced]);
 

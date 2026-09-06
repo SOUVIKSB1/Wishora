@@ -39,26 +39,61 @@ export const StepMusic: React.FC<StepMusicProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        const customTrack: MusicTrack = {
-          id: `custom_${Date.now()}`,
-          title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-          artist: 'My Custom Song',
-          genre: 'Custom Upload',
-          duration: 90,
-          storage_url: dataUrl,
-          mood_tags: ['personal'],
-          is_premium: 0
-        };
-        setTracks(prev => [customTrack, ...prev]);
-        onSelectMusic(customTrack.id, dataUrl);
-        onPlayPreview(customTrack.id, dataUrl);
-      }
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Audio file should be under 15MB for optimal streaming performance.');
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const tempAudio = new window.Audio(objectUrl);
+
+    tempAudio.onloadedmetadata = () => {
+      const detectedDuration = Math.min(180, Math.round(tempAudio.duration) || 90);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          const customTrack: MusicTrack = {
+            id: `custom_${Date.now()}`,
+            title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+            artist: 'My Custom Song',
+            genre: 'Custom Upload',
+            duration: detectedDuration,
+            storage_url: dataUrl,
+            mood_tags: ['personal'],
+            is_premium: 0
+          };
+          setTracks(prev => [customTrack, ...prev]);
+          onSelectMusic(customTrack.id, dataUrl);
+          onTrimChange(0, Math.min(30, detectedDuration));
+          onPlayPreview(customTrack.id, dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
+
+    tempAudio.onerror = () => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          const customTrack: MusicTrack = {
+            id: `custom_${Date.now()}`,
+            title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+            artist: 'My Custom Song',
+            genre: 'Custom Upload',
+            duration: 90,
+            storage_url: dataUrl,
+            mood_tags: ['personal'],
+            is_premium: 0
+          };
+          setTracks(prev => [customTrack, ...prev]);
+          onSelectMusic(customTrack.id, dataUrl);
+          onPlayPreview(customTrack.id, dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
   };
 
   const genres = ['All', 'Orchestral', 'Lo-fi Chill', 'Birthday Classics', 'Acoustic', 'Bollywood', 'Ambient'];
