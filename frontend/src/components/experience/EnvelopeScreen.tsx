@@ -10,12 +10,12 @@ interface EnvelopeScreenProps {
 
 export const EnvelopeScreen: React.FC<EnvelopeScreenProps> = ({
   recipientName,
-  senderName = 'Souvik Sinhababu',
+  senderName,
   onUnseal
 }) => {
   const [isOpening, setIsOpening] = useState(false);
   const firstName = recipientName ? recipientName.trim().split(' ')[0] : 'Friend';
-  const senderFirstName = senderName ? senderName.trim().split(' ')[0] : 'Director';
+  const senderFirstName = senderName ? senderName.trim().split(' ')[0] : 'Someone Special';
 
   const handleOpen = () => {
     if (isOpening) return;

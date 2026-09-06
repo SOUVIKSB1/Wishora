@@ -7,12 +7,14 @@ interface CountdownScreenProps {
   recipientName: string;
   recipientDob: string;
   onContinue: () => void;
+  isPreview?: boolean;
 }
 
 export const CountdownScreen: React.FC<CountdownScreenProps> = ({
   recipientName,
   recipientDob,
-  onContinue
+  onContinue,
+  isPreview = false
 }) => {
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
     days: 0,
@@ -111,14 +113,16 @@ export const CountdownScreen: React.FC<CountdownScreenProps> = ({
             "Good things come to those who wait for their magic day ✨"
           </p>
 
-          {/* Discreet Director Bypass Mode */}
-          <button
-            onClick={onContinue}
-            className="inline-flex items-center gap-1.5 text-xs text-text-3 hover:text-accent font-mono transition-colors pt-4 cursor-pointer"
-          >
-            <KeyRound size={12} />
-            <span>Director Preview Mode (Bypass Lock)</span>
-          </button>
+          {/* Discreet Director Bypass Mode - Only visible to creator in dashboard preview mode */}
+          {isPreview && (
+            <button
+              onClick={onContinue}
+              className="inline-flex items-center gap-1.5 text-xs text-text-3 hover:text-accent font-mono transition-colors pt-4 cursor-pointer"
+            >
+              <KeyRound size={12} />
+              <span>Director Preview Mode (Bypass Lock)</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

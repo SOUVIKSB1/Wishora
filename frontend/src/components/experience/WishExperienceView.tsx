@@ -15,9 +15,10 @@ import { api } from '../../services/api.js';
 interface WishExperienceViewProps {
   data: WishExperienceData;
   onExit: () => void;
+  isPreview?: boolean;
 }
 
-export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, onExit }) => {
+export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, onExit, isPreview = false }) => {
   const { wish, photos } = data;
   const [currentStep, setCurrentStep] = useState<
     'envelope' | 'countdown' | 'cake' | 'timeline' | 'album' | 'celebration' | 'reaction' | 'promo'
@@ -37,7 +38,8 @@ export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, on
 
   const handleUnseal = () => {
     playPaperCrinkleSound();
-    playSynthTheme(wish.custom_music_url || 'synth://golden_hour');
+    const musicTrackUrl = wish.custom_music_url || (wish as any).music_storage_url || 'synth://golden_hour';
+    playSynthTheme(musicTrackUrl);
 
     // Check if birthday is today or in future
     const dob = new Date(wish.recipient_dob);
@@ -103,6 +105,7 @@ export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, on
           recipientName={wish.recipient_name}
           recipientDob={wish.recipient_dob}
           onContinue={handleCountdownContinue}
+          isPreview={isPreview}
         />
       )}
 

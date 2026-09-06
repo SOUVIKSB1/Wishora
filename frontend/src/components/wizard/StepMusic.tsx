@@ -159,7 +159,10 @@ export const StepMusic: React.FC<StepMusicProps> = ({
             <div
               key={t.id}
               onClick={() => {
-                onSelectMusic(t.id);
+                const customUrl = (t.storage_url.startsWith('data:') || t.storage_url.startsWith('http'))
+                  ? t.storage_url
+                  : undefined;
+                onSelectMusic(t.id, customUrl);
                 onPlayPreview(t.id, t.storage_url);
               }}
               className={`relative bg-surface-elevated/60 border rounded-2xl p-3.5 flex items-center gap-3 cursor-pointer transition-all ${

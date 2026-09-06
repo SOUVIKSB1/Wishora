@@ -270,7 +270,11 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
                   customMusicUrl={formData.custom_music_url}
                   trimStart={formData.music_trim_start}
                   trimEnd={formData.music_trim_end}
-                  onSelectMusic={(id) => setFormData(prev => ({ ...prev, music_id: id }))}
+                  onSelectMusic={(id, customUrl) => setFormData(prev => ({
+                    ...prev,
+                    music_id: id,
+                    custom_music_url: customUrl !== undefined ? customUrl : (id.startsWith('custom_') ? prev.custom_music_url : '')
+                  }))}
                   onTrimChange={(start, end) => setFormData(prev => ({ ...prev, music_trim_start: start, music_trim_end: end }))}
                   onPlayPreview={handlePlayPreview}
                   isPlaying={isPlaying}

@@ -586,17 +586,17 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
                     <Mic size={24} />
                   </div>
                   <span className="text-xs font-mono font-bold text-white block">
-                    🎙️ Voice Note Duration: {activeReactionWish.last_reaction_duration || 12}s
+                    🎙️ Voice Note Duration: {activeReactionWish.last_reaction_duration ? `${activeReactionWish.last_reaction_duration}s` : 'Recorded Audio'}
                   </span>
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                      className="px-6 py-2 rounded-full bg-accent text-void font-bold text-xs flex items-center gap-2 shadow-glow-sm cursor-pointer"
-                    >
-                      {isPlayingAudio ? <Pause size={14} /> : <Play size={14} />}
-                      <span>{isPlayingAudio ? 'Pause Voice Note' : 'Play Voice Note'}</span>
-                    </button>
-                  </div>
+                  {activeReactionWish.last_reaction_media ? (
+                    <audio
+                      src={activeReactionWish.last_reaction_media}
+                      controls
+                      className="w-full max-w-xs mx-auto mt-2 accent-accent"
+                    />
+                  ) : (
+                    <p className="text-xs text-text-3 font-mono italic">Audio recording preview</p>
+                  )}
                 </div>
               )}
 

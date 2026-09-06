@@ -61,6 +61,7 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
+  const audioBase64Ref = useRef<string | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   // Video references
@@ -69,6 +70,7 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
   const videoChunksRef = useRef<Blob[]>([]);
   const videoMediaRecorderRef = useRef<MediaRecorder | null>(null);
   const videoBlobUrlRef = useRef<string | null>(null);
+  const videoBase64Ref = useRef<string | null>(null);
   const videoTimerRef = useRef<number | null>(null);
 
   const showToast = (msg: string) => {
@@ -189,6 +191,13 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         audioBlobUrlRef.current = URL.createObjectURL(blob);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            audioBase64Ref.current = reader.result;
+          }
+        };
+        reader.readAsDataURL(blob);
         setVoiceRecorded(true);
       };
 
@@ -232,12 +241,12 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
   };
 
   const playVoiceNote = () => {
-    if (!audioBlobUrlRef.current) return;
+    if (!audioBlobUrlRef.current && !audioBase64Ref.current) return;
     if (audioElementRef.current) {
       audioElementRef.current.pause();
     }
 
-    const audio = new Audio(audioBlobUrlRef.current);
+    const audio = new Audio(audioBlobUrlRef.current || audioBase64Ref.current || '');
     audioElementRef.current = audio;
     setIsVoicePlaying(true);
 
@@ -256,6 +265,7 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
       audioElementRef.current.pause();
     }
     audioBlobUrlRef.current = null;
+    audioBase64Ref.current = null;
     setVoiceRecorded(false);
     setVoiceDuration(0);
     setVoicePlaybackProgress(0);
@@ -303,6 +313,13 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
       mediaRecorder.onstop = () => {
         const blob = new Blob(videoChunksRef.current, { type: 'video/webm' });
         videoBlobUrlRef.current = URL.createObjectURL(blob);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            videoBase64Ref.current = reader.result;
+          }
+        };
+        reader.readAsDataURL(blob);
         setVideoRecorded(true);
 
         if (videoElementRef.current) {
@@ -356,6 +373,7 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
       videoElementRef.current.src = '';
     }
     videoBlobUrlRef.current = null;
+    videoBase64Ref.current = null;
     setVideoRecorded(false);
     setVideoDuration(0);
   };
@@ -364,10 +382,16 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
   const handleSubmit = async (type: 'text' | 'voice' | 'video') => {
     setIsSending(true);
     try {
+      const mediaPayload = type === 'voice'
+        ? (audioBase64Ref.current || audioBlobUrlRef.current || '')
+        : type === 'video'
+        ? (videoBase64Ref.current || videoBlobUrlRef.current || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400')
+        : undefined;
+
       await api.submitReaction(slug, {
         type,
         message_text: type === 'text' ? textNote : undefined,
-        media_url: type === 'video' ? (videoBlobUrlRef.current || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400') : undefined,
+        media_url: mediaPayload,
         duration: type === 'voice' ? voiceDuration : type === 'video' ? videoDuration : 0,
       });
 

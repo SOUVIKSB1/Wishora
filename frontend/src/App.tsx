@@ -37,6 +37,7 @@ export function App() {
 
   // Recipient experience state
   const [activeExperience, setActiveExperience] = useState<WishExperienceData | null>(null);
+  const [isDirectorPreview, setIsDirectorPreview] = useState(false);
   const [isLoadingExperience, setIsLoadingExperience] = useState(false);
 
   // Check URL slug for direct recipient link (/w/:slug)
@@ -45,7 +46,7 @@ export function App() {
     const match = path.match(/^\/w\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
       const slug = match[1];
-      loadPublicExperience(slug);
+      loadPublicExperience(slug, false);
       setIsCheckingAuth(false);
       return;
     }
@@ -107,8 +108,9 @@ export function App() {
     setShowAuthModal(true);
   };
 
-  const loadPublicExperience = async (slug: string) => {
+  const loadPublicExperience = async (slug: string, isPreview: boolean = false) => {
     setIsLoadingExperience(true);
+    setIsDirectorPreview(isPreview);
     try {
       const res = await api.getPublicWish(slug);
       setActiveExperience(res);
@@ -164,8 +166,10 @@ export function App() {
     return (
       <WishExperienceView
         data={activeExperience}
+        isPreview={isDirectorPreview}
         onExit={() => {
           setActiveExperience(null);
+          setIsDirectorPreview(false);
           window.history.pushState({}, '', '/');
         }}
       />
@@ -226,7 +230,7 @@ export function App() {
                 setShowCreateWizard(true);
               }}
               onCreateWishForContact={handleCreateWishForContact}
-              onPreviewExperience={(slug) => loadPublicExperience(slug)}
+              onPreviewExperience={(slug) => loadPublicExperience(slug, true)}
               onNavigateToTab={setActiveTab}
             />
           )}
@@ -242,7 +246,7 @@ export function App() {
                 setCreateWizardInitial(w);
                 setShowCreateWizard(true);
               }}
-              onPreviewExperience={(slug) => loadPublicExperience(slug)}
+              onPreviewExperience={(slug) => loadPublicExperience(slug, true)}
               onDeleteWish={handleDeleteWish}
               onNewWish={() => {
                 setCreateWizardInitial(null);

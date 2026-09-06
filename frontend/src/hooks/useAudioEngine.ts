@@ -14,7 +14,7 @@ export function useAudioEngine() {
       if (AudioCtx) {
         audioCtxRef.current = new AudioCtx();
         gainNodeRef.current = audioCtxRef.current.createGain();
-        gainNodeRef.current.gain.value = 0.3;
+        gainNodeRef.current.gain.value = 0.35;
         gainNodeRef.current.connect(audioCtxRef.current.destination);
       }
     }
@@ -23,46 +23,138 @@ export function useAudioEngine() {
     }
   }, []);
 
+  const stop = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (htmlAudioRef.current) {
+      try {
+        htmlAudioRef.current.pause();
+        htmlAudioRef.current.currentTime = 0;
+        htmlAudioRef.current = null;
+      } catch (e) {}
+    }
+    setIsPlaying(false);
+  }, []);
+
   const playSynthTheme = useCallback((themePreset: string = 'synth://golden_hour') => {
+    stop();
+
+    // 1. If it's a real audio file (Data URL or HTTP web URL)
+    if (themePreset && (themePreset.startsWith('data:audio') || themePreset.startsWith('http://') || themePreset.startsWith('https://') || themePreset.startsWith('blob:'))) {
+      try {
+        const audio = new Audio(themePreset);
+        audio.loop = true;
+        audio.volume = isMuted ? 0 : 0.6;
+        htmlAudioRef.current = audio;
+        setIsPlaying(true);
+        audio.play().catch(err => {
+          console.warn('Audio auto-play policy prevented playback or failed:', err);
+        });
+        return;
+      } catch (err) {
+        console.error('Failed to initialize HTML audio element:', err);
+      }
+    }
+
+    // 2. Synthesized Soundtracks for Built-in Tracks
     initAudioCtx();
     if (!audioCtxRef.current || !gainNodeRef.current) return;
 
-    stop();
     setIsPlaying(true);
-
     const ctx = audioCtxRef.current;
     const masterGain = gainNodeRef.current;
+    masterGain.gain.value = isMuted ? 0 : 0.32;
 
-    // Frequencies mapping for chords
+    const presetLower = (themePreset || '').toLowerCase();
+
+    // Configure distinct parameters per soundtrack
     let chordNotes: number[][] = [];
-    if (themePreset.includes('golden_hour') || themePreset.includes('orchestral')) {
-      chordNotes = [
-        [261.63, 329.63, 392.00, 523.25], // C Major
-        [220.00, 261.63, 329.63, 440.00], // A Minor
-        [174.61, 220.00, 261.63, 349.23], // F Major
-        [196.00, 246.94, 293.66, 392.00], // G Major
-      ];
-    } else if (themePreset.includes('lofi')) {
+    let oscType: OscillatorType = 'sine';
+    let tempoMs = 280;
+    let attackTime = 0.04;
+    let releaseTime = 0.55;
+    let peakGain = 0.22;
+
+    if (presetLower.includes('lofi') || presetLower.includes('trk_2')) {
+      // TRACK 2: Midnight Lo-Fi Nostalgia (Warm mellow chords, slow swing tempo)
       chordNotes = [
         [220.00, 261.63, 329.63, 392.00], // Am7
-        [174.61, 220.00, 261.63, 329.63], // Fmaj7
+        [146.83, 220.00, 261.63, 349.23], // Dm7
         [196.00, 246.94, 293.66, 349.23], // G7
-        [164.81, 196.00, 246.94, 293.66], // Em7
+        [130.81, 196.00, 246.94, 329.63], // Cmaj7
       ];
-    } else if (themePreset.includes('bollywood') || themePreset.includes('electric_pop')) {
+      oscType = 'triangle';
+      tempoMs = 380;
+      attackTime = 0.08;
+      releaseTime = 0.7;
+      peakGain = 0.24;
+    } else if (presetLower.includes('pop') || presetLower.includes('electric') || presetLower.includes('trk_3')) {
+      // TRACK 3: Joyful Electric Pop (Upbeat, bouncy, energetic major triad arpeggios)
       chordNotes = [
         [293.66, 369.99, 440.00, 587.33], // D Major
         [246.94, 293.66, 369.99, 493.88], // B Minor
         [196.00, 246.94, 293.66, 392.00], // G Major
         [220.00, 277.18, 329.63, 440.00], // A Major
       ];
-    } else {
+      oscType = 'sawtooth';
+      tempoMs = 180;
+      attackTime = 0.01;
+      releaseTime = 0.35;
+      peakGain = 0.12;
+    } else if (presetLower.includes('acoustic') || presetLower.includes('velvet') || presetLower.includes('trk_4')) {
+      // TRACK 4: Romantic Velvet Acoustic (Intimate, soft harp/guitar picking in G major)
       chordNotes = [
-        [261.63, 329.63, 392.00, 493.88], // Cmaj7
-        [220.00, 261.63, 329.63, 392.00], // Am7
-        [174.61, 220.00, 261.63, 329.63], // Fmaj7
-        [196.00, 246.94, 293.66, 392.00], // G
+        [196.00, 246.94, 293.66, 392.00, 493.88], // G Major
+        [130.81, 196.00, 261.63, 329.63, 392.00], // Cadd9
+        [164.81, 246.94, 329.63, 392.00, 493.88], // Em7
+        [146.83, 220.00, 293.66, 369.99, 440.00], // D/F#
       ];
+      oscType = 'triangle';
+      tempoMs = 260;
+      attackTime = 0.02;
+      releaseTime = 0.6;
+      peakGain = 0.2;
+    } else if (presetLower.includes('bollywood') || presetLower.includes('dhol') || presetLower.includes('trk_5')) {
+      // TRACK 5: Bollywood Celebration Dhol (Festive rhythm with melodic punch)
+      chordNotes = [
+        [293.66, 440.00, 587.33, 739.99], // D high festive
+        [220.00, 329.63, 440.00, 659.25], // A celebratory
+        [196.00, 293.66, 392.00, 587.33], // G vibrant
+        [246.94, 369.99, 493.88, 739.99], // Bm climax
+      ];
+      oscType = 'square';
+      tempoMs = 210;
+      attackTime = 0.01;
+      releaseTime = 0.28;
+      peakGain = 0.09;
+    } else if (presetLower.includes('ambient') || presetLower.includes('celestial') || presetLower.includes('trk_6')) {
+      // TRACK 6: Celestial Ambient Dreams (Slow, ethereal space chimes, long reverbs)
+      chordNotes = [
+        [164.81, 246.94, 329.63, 493.88, 659.25], // Em9
+        [130.81, 196.00, 261.63, 329.63, 523.25], // Cmaj7
+        [220.00, 261.63, 329.63, 440.00, 659.25], // Am9
+        [146.83, 220.00, 293.66, 440.00, 587.33], // Dsus4
+      ];
+      oscType = 'sine';
+      tempoMs = 450;
+      attackTime = 0.15;
+      releaseTime = 1.2;
+      peakGain = 0.22;
+    } else {
+      // TRACK 1 / DEFAULT: Cinematic Golden Hour (Uplifting Orchestral Arpeggio)
+      chordNotes = [
+        [261.63, 329.63, 392.00, 523.25], // C Major
+        [220.00, 261.63, 329.63, 440.00], // A Minor
+        [174.61, 220.00, 261.63, 349.23], // F Major
+        [196.00, 246.94, 293.66, 392.00], // G Major
+      ];
+      oscType = 'sine';
+      tempoMs = 280;
+      attackTime = 0.04;
+      releaseTime = 0.55;
+      peakGain = 0.22;
     }
 
     let step = 0;
@@ -72,29 +164,28 @@ export function useAudioEngine() {
       const currentChord = chordNotes[Math.floor(step / 4) % chordNotes.length];
       const freq = currentChord[step % currentChord.length];
 
-      // Warm oscillator
       const osc = ctx.createOscillator();
       const noteGain = ctx.createGain();
 
-      osc.type = themePreset.includes('lofi') ? 'triangle' : 'sine';
+      osc.type = oscType;
       osc.frequency.setValueAtTime(freq, now);
 
       noteGain.gain.setValueAtTime(0.001, now);
-      noteGain.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
-      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      noteGain.gain.exponentialRampToValueAtTime(peakGain, now + attackTime);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
 
       osc.connect(noteGain);
       noteGain.connect(masterGain);
 
       osc.start(now);
-      osc.stop(now + 0.6);
+      osc.stop(now + releaseTime + 0.05);
 
       step++;
-      timerRef.current = window.setTimeout(playArp, 280);
+      timerRef.current = window.setTimeout(playArp, tempoMs);
     };
 
     playArp();
-  }, [initAudioCtx]);
+  }, [initAudioCtx, isMuted, stop]);
 
   const playCelebrationChime = useCallback(() => {
     initAudioCtx();
@@ -154,21 +245,18 @@ export function useAudioEngine() {
     noise.start();
   }, [initAudioCtx]);
 
-  const stop = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    if (htmlAudioRef.current) {
-      htmlAudioRef.current.pause();
-    }
-    setIsPlaying(false);
-  }, []);
-
   const toggleMute = useCallback(() => {
-    if (gainNodeRef.current) {
+    if (htmlAudioRef.current) {
       if (isMuted) {
-        gainNodeRef.current.gain.value = 0.3;
+        htmlAudioRef.current.volume = 0.6;
+        setIsMuted(false);
+      } else {
+        htmlAudioRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    } else if (gainNodeRef.current) {
+      if (isMuted) {
+        gainNodeRef.current.gain.value = 0.32;
         setIsMuted(false);
       } else {
         gainNodeRef.current.gain.value = 0;
@@ -196,3 +284,4 @@ export function useAudioEngine() {
     toggleMute
   };
 }
+
