@@ -1,0 +1,307 @@
+import React, { useState, useEffect } from 'react';
+import { Home, BookOpen, Users, User, Plus, Sparkles } from 'lucide-react';
+import { api } from './services/api.js';
+import { Contact, Folder } from './types/contact.js';
+import { Wish, WishExperienceData } from './types/wish.js';
+import { HomeView } from './components/HomeView.js';
+import { WishbookView } from './components/wishbook/WishbookView.js';
+import { ContactList } from './components/contacts/ContactList.js';
+import { ProfileView } from './components/ProfileView.js';
+import { CreateWishModal } from './components/wizard/CreateWishModal.js';
+import { AddContactModal } from './components/contacts/AddContactModal.js';
+import { CsvImportModal } from './components/contacts/CsvImportModal.js';
+import { OnboardingModal } from './components/OnboardingModal.js';
+import { WishExperienceView } from './components/experience/WishExperienceView.js';
+import { ParticleField } from './components/canvas/ParticleField.js';
+
+export function App() {
+  const [activeTab, setActiveTab] = useState<'home' | 'wishbook' | 'contacts' | 'profile'>('home');
+  const [user, setUser] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+
+  // Modals state
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [createWizardInitial, setCreateWizardInitial] = useState<any>(null);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [editContact, setEditContact] = useState<any>(null);
+  const [showCsvImport, setShowCsvImport] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Recipient experience state
+  const [activeExperience, setActiveExperience] = useState<WishExperienceData | null>(null);
+  const [isLoadingExperience, setIsLoadingExperience] = useState(false);
+
+  // Check URL slug for direct recipient link (/w/:slug)
+  useEffect(() => {
+    const path = window.location.pathname;
+    const match = path.match(/^\/w\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      const slug = match[1];
+      loadPublicExperience(slug);
+    }
+
+    // Check first-time onboarding
+    if (!localStorage.getItem('wishora_onboarded')) {
+      setShowOnboarding(true);
+    }
+
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      const [authRes, contactsRes, wishesRes, foldersRes] = await Promise.all([
+        api.getMe().catch(() => ({ user: null, stats: null })),
+        api.getContacts().catch(() => ({ contacts: [] })),
+        api.getWishes().catch(() => ({ wishes: [] })),
+        api.getFolders().catch(() => ({ folders: [] })),
+      ]);
+
+      if (authRes.user) {
+        setUser(authRes.user);
+        setStats(authRes.stats);
+      }
+      setContacts(contactsRes.contacts || []);
+      setWishes(wishesRes.wishes || []);
+      setFolders(foldersRes.folders || []);
+    } catch (err) {
+      console.error('Failed to load initial data:', err);
+    }
+  };
+
+  const loadPublicExperience = async (slug: string) => {
+    setIsLoadingExperience(true);
+    try {
+      const res = await api.getPublicWish(slug);
+      setActiveExperience(res);
+    } catch (err) {
+      console.error('Failed to load experience for slug:', slug, err);
+    } finally {
+      setIsLoadingExperience(false);
+    }
+  };
+
+  const handleCreateWishForContact = (c: Contact) => {
+    const dobString = c.dob_year
+      ? `${c.dob_year}-${String(c.dob_month).padStart(2, '0')}-${String(c.dob_day || 1).padStart(2, '0')}`
+      : `2000-${String(c.dob_month).padStart(2, '0')}-${String(c.dob_day || 1).padStart(2, '0')}`;
+
+    setCreateWizardInitial({
+      name: c.name,
+      recipient_dob: dobString,
+      gender: c.gender,
+      relationship: c.relationship,
+      avatar_url: c.avatar_url,
+      contact_id: c.id
+    });
+    setShowCreateWizard(true);
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    await api.deleteContact(id);
+    loadInitialData();
+  };
+
+  const handleDeleteWish = async (id: string) => {
+    await api.deleteWish(id);
+    loadInitialData();
+  };
+
+  const handleCreateFolder = async (name: string, color: string) => {
+    await api.createFolder({ name, color });
+    loadInitialData();
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    await api.deleteFolder(folderId);
+    loadInitialData();
+  };
+
+  const handleMoveWishToFolder = async (wishId: string, folderId: string) => {
+    await api.updateWish(wishId, { folder_id: folderId });
+    loadInitialData();
+  };
+
+  if (activeExperience) {
+    return (
+      <WishExperienceView
+        data={activeExperience}
+        onExit={() => {
+          setActiveExperience(null);
+          window.history.pushState({}, '', '/');
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-void text-text-1 flex flex-col justify-between selection:bg-accent selection:text-void relative overflow-x-hidden">
+      {/* Ambient Particle Field in Background */}
+      <ParticleField density={30} colors={['#C8A96E', '#FFF1D0', '#7C3AED']} />
+
+      {/* Main App Container */}
+      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 py-6 sm:py-8 mb-20">
+        {/* Top Navbar */}
+        <header className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.08]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-accent to-yellow-700 flex items-center justify-center font-display font-black text-void text-lg shadow-glow-sm">
+              W
+            </div>
+            <div>
+              <span className="text-xl font-display font-extrabold tracking-tight text-text-1">
+                WISHORA
+              </span>
+              <span className="text-[10px] font-mono tracking-widest text-accent uppercase block -mt-1">
+                CINEMATIC ENGINE
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setCreateWizardInitial(null);
+                setShowCreateWizard(true);
+              }}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-extrabold shadow-[0_0_20px_rgba(200,169,110,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <Sparkles size={14} />
+              <span>Direct New Wish</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Tab Pages */}
+        <main>
+          {activeTab === 'home' && (
+            <HomeView
+              user={user}
+              contacts={contacts}
+              wishes={wishes}
+              stats={stats}
+              onNewWish={() => {
+                setCreateWizardInitial(null);
+                setShowCreateWizard(true);
+              }}
+              onSelectWish={(w) => {
+                setCreateWizardInitial(w);
+                setShowCreateWizard(true);
+              }}
+              onCreateWishForContact={handleCreateWishForContact}
+              onPreviewExperience={(slug) => loadPublicExperience(slug)}
+              onNavigateToTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'wishbook' && (
+            <WishbookView
+              wishes={wishes}
+              folders={folders}
+              onCreateFolder={handleCreateFolder}
+              onDeleteFolder={handleDeleteFolder}
+              onMoveWishToFolder={handleMoveWishToFolder}
+              onSelectWish={(w) => {
+                setCreateWizardInitial(w);
+                setShowCreateWizard(true);
+              }}
+              onPreviewExperience={(slug) => loadPublicExperience(slug)}
+              onDeleteWish={handleDeleteWish}
+              onNewWish={() => {
+                setCreateWizardInitial(null);
+                setShowCreateWizard(true);
+              }}
+            />
+          )}
+
+          {activeTab === 'contacts' && (
+            <ContactList
+              contacts={contacts}
+              onAddContact={() => {
+                setEditContact(null);
+                setShowAddContact(true);
+              }}
+              onImportCsv={() => setShowCsvImport(true)}
+              onCreateWishForContact={handleCreateWishForContact}
+              onDeleteContact={handleDeleteContact}
+              onEditContact={(c) => {
+                setEditContact(c);
+                setShowAddContact(true);
+              }}
+            />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileView
+              user={user}
+              stats={stats}
+              onUpdate={loadInitialData}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Floating Bottom Navigation Bar */}
+      <nav className="fixed bottom-4 inset-x-0 z-40 max-w-md mx-auto px-4 pointer-events-none">
+        <div className="bg-surface-elevated/90 border border-white/[0.12] rounded-full p-2 backdrop-blur-2xl shadow-glass-card flex items-center justify-around pointer-events-auto">
+          {[
+            { key: 'home', label: 'Home', icon: <Home size={18} /> },
+            { key: 'wishbook', label: 'Wishbook', icon: <BookOpen size={18} /> },
+            { key: 'contacts', label: 'Contacts', icon: <Users size={18} /> },
+            { key: 'profile', label: 'Director', icon: <User size={18} /> },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setActiveTab(item.key as any)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                activeTab === item.key
+                  ? 'bg-accent text-void shadow-glow-sm'
+                  : 'text-text-2 hover:text-text-1 hover:bg-white/[0.04]'
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Modals */}
+      {showCreateWizard && (
+        <CreateWishModal
+          initialData={createWizardInitial}
+          folders={folders}
+          onClose={() => setShowCreateWizard(false)}
+          onSuccess={() => {
+            loadInitialData();
+          }}
+        />
+      )}
+
+      {showAddContact && (
+        <AddContactModal
+          editContact={editContact}
+          onClose={() => setShowAddContact(false)}
+          onAdded={loadInitialData}
+        />
+      )}
+
+      {showCsvImport && (
+        <CsvImportModal
+          onClose={() => setShowCsvImport(false)}
+          onImported={loadInitialData}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;

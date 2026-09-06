@@ -1,0 +1,647 @@
+{
+  "1960": {
+    "year": 1960,
+    "worldEvent": "First televised presidential debate aired; 17 African nations gained independence in the historic 'Year of Africa'.",
+    "songTitle": "The Twist",
+    "songArtist": "Chubby Checker",
+    "movieTitle": "Psycho",
+    "movieGenre": "Psychological Thriller",
+    "funTrivia": "The optical laser was operated for the first time by Theodore Maiman.",
+    "indiaMilestone": "Foundations laid for India's indigenous space and atomic energy programs by Dr. Homi Bhabha and Vikram Sarabhai.",
+    "topIndianCity": {
+      "name": "Kolkata (Calcutta)",
+      "highlight": "Cultural epicenter and flourishing coffee house intellectual renaissance.",
+      "imageUrl": "https://images.unsplash.com/photo-1558431382-27e303142255?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1965": {
+    "year": 1965,
+    "worldEvent": "Cosmonaut Alexei Leonov performed the first spacewalk in human history.",
+    "songTitle": "(I Can't Get No) Satisfaction",
+    "songArtist": "The Rolling Stones",
+    "movieTitle": "The Sound of Music",
+    "movieGenre": "Musical Drama",
+    "funTrivia": "Sony launched the first portable home video tape recorder.",
+    "indiaMilestone": "Launch of the Green Revolution under M.S. Swaminathan, driving agricultural self-reliance across the nation.",
+    "topIndianCity": {
+      "name": "Varanasi (Kashi)",
+      "highlight": "Ancient riverfront ghats and evening Ganga aarti drawing global travelers.",
+      "imageUrl": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1970": {
+    "year": 1970,
+    "worldEvent": "The first Earth Day mobilized 20 million people worldwide for environmental protection.",
+    "songTitle": "Bridge Over Troubled Water",
+    "songArtist": "Simon & Garfunkel",
+    "movieTitle": "Love Story",
+    "movieGenre": "Romantic Drama",
+    "funTrivia": "Douglas Engelbart received the patent for the first computer mouse.",
+    "indiaMilestone": "Launch of Operation Flood (White Revolution), propelling India into the world's largest milk producer.",
+    "topIndianCity": {
+      "name": "Mumbai (Bombay)",
+      "highlight": "Marine Drive's Queen's Necklace and the golden era of Hindi cinema.",
+      "imageUrl": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1975": {
+    "year": 1975,
+    "worldEvent": "Apollo and Soyuz spacecraft docked in orbit for the first joint US-Soviet space mission.",
+    "songTitle": "Bohemian Rhapsody",
+    "songArtist": "Queen",
+    "movieTitle": "Jaws",
+    "movieGenre": "Thriller Adventure",
+    "funTrivia": "Microsoft was founded by Bill Gates and Paul Allen.",
+    "indiaMilestone": "ISRO launched India's historic first satellite 'Aryabhata' into Earth orbit.",
+    "topIndianCity": {
+      "name": "Jaipur (Pink City)",
+      "highlight": "Royal Hawa Mahal and Amber Fort palaces attracting international explorers.",
+      "imageUrl": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1980": {
+    "year": 1980,
+    "worldEvent": "The US Olympic hockey team pulled off the 'Miracle on Ice'; Mount St. Helens erupted.",
+    "songTitle": "Call Me",
+    "songArtist": "Blondie",
+    "movieTitle": "Star Wars: The Empire Strikes Back",
+    "movieGenre": "Sci-Fi Epic",
+    "funTrivia": "Pac-Man debuted in arcades and swept global pop culture.",
+    "indiaMilestone": "India launched the SLV-3 rocket carrying the Rohini-1 satellite, entering the elite spacefaring club.",
+    "topIndianCity": {
+      "name": "Goa",
+      "highlight": "Golden palm-fringed coastlines, pristine sunsets, and bohemian beach culture.",
+      "imageUrl": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1985": {
+    "year": 1985,
+    "worldEvent": "Live Aid concerts united 1.9 billion global viewers across 150 nations for famine relief.",
+    "songTitle": "Careless Whisper",
+    "songArtist": "Wham! ft. George Michael",
+    "movieTitle": "Back to the Future",
+    "movieGenre": "Sci-Fi Adventure",
+    "funTrivia": "Microsoft officially launched Windows 1.0.",
+    "indiaMilestone": "Dhruva research reactor went critical at BARC, expanding indigenous nuclear scientific research.",
+    "topIndianCity": {
+      "name": "Agra",
+      "highlight": "The immortal marble poetry of the Taj Mahal welcoming travelers under full moon.",
+      "imageUrl": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1990": {
+    "year": 1990,
+    "worldEvent": "The Hubble Space Telescope was launched into orbit, opening humanity's eyes to deep space.",
+    "songTitle": "Vogue",
+    "songArtist": "Madonna",
+    "movieTitle": "Home Alone",
+    "movieGenre": "Family Comedy",
+    "funTrivia": "The very first search engine 'Archie' was created.",
+    "indiaMilestone": "Airlift of over 170,000 citizens from Kuwait recognized as the largest civil evacuation in human history.",
+    "topIndianCity": {
+      "name": "Bengaluru (Bangalore)",
+      "highlight": "The Garden City budding into the Silicon Valley of South Asia.",
+      "imageUrl": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1991": {
+    "year": 1991,
+    "worldEvent": "Tim Berners-Lee made the World Wide Web publicly accessible for the first time.",
+    "songTitle": "Smells Like Teen Spirit",
+    "songArtist": "Nirvana",
+    "movieTitle": "Terminator 2: Judgment Day",
+    "movieGenre": "Sci-Fi Action",
+    "funTrivia": "Super Nintendo Entertainment System (SNES) made its global debut.",
+    "indiaMilestone": "Historic Economic Liberalisation reforms launched, unleashing entrepreneurial growth and global integration.",
+    "topIndianCity": {
+      "name": "Mumbai",
+      "highlight": "The bustling financial capital driving nationwide stock market modernization.",
+      "imageUrl": "https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1992": {
+    "year": 1992,
+    "worldEvent": "The Maastricht Treaty created the European Union; first mobile SMS text message was sent.",
+    "songTitle": "I Will Always Love You",
+    "songArtist": "Whitney Houston",
+    "movieTitle": "Aladdin",
+    "movieGenre": "Animation",
+    "funTrivia": "Cartoon Network aired on television for the very first time.",
+    "indiaMilestone": "Satyajit Ray conferred an honorary Academy Award for Lifetime Achievement in World Cinema.",
+    "topIndianCity": {
+      "name": "Kolkata",
+      "highlight": "Vibrant celebration of Ray's Oscar and heritage tram networks.",
+      "imageUrl": "https://images.unsplash.com/photo-1558431382-27e303142255?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1993": {
+    "year": 1993,
+    "worldEvent": "CERN released the World Wide Web source code into the public domain forever.",
+    "songTitle": "Dreamlover",
+    "songArtist": "Mariah Carey",
+    "movieTitle": "Jurassic Park",
+    "movieGenre": "Adventure",
+    "funTrivia": "Beanie Babies made their first appearance at the World Toy Fair.",
+    "indiaMilestone": "Inauguration of INSAT-2B satellite revolutionizing telecommunications and national broadcasts.",
+    "topIndianCity": {
+      "name": "Udaipur (City of Lakes)",
+      "highlight": "Shimmering Lake Pichola and floating Lake Palace royal heritage.",
+      "imageUrl": "https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1994": {
+    "year": 1994,
+    "worldEvent": "Nelson Mandela was inaugurated as South Africa's first democratically elected president.",
+    "songTitle": "The Sign",
+    "songArtist": "Ace of Base",
+    "movieTitle": "The Lion King",
+    "movieGenre": "Animation Drama",
+    "funTrivia": "PlayStation 1 was first released by Sony.",
+    "indiaMilestone": "Sushmita Sen and Aishwarya Rai crowned Miss Universe and Miss World in a historic double triumph.",
+    "topIndianCity": {
+      "name": "New Delhi",
+      "highlight": "Dilli Haat crafts bazaar opening, celebrating folk artisans across 28 states.",
+      "imageUrl": "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1995": {
+    "year": 1995,
+    "worldEvent": "Toy Story premiered as the world's first feature-length computer-animated film.",
+    "songTitle": "Gangsta's Paradise",
+    "songArtist": "Coolio",
+    "movieTitle": "Toy Story",
+    "movieGenre": "Animation",
+    "funTrivia": "eBay was founded under the original name 'AuctionWeb'.",
+    "indiaMilestone": "VSNL launched commercial public Internet access in India on August 15, 1995.",
+    "topIndianCity": {
+      "name": "Mumbai",
+      "highlight": "DDLJ premiere at Maratha Mandir and emergence of Cyber Cafes.",
+      "imageUrl": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1996": {
+    "year": 1996,
+    "worldEvent": "Dolly the sheep became the first mammal successfully cloned from an adult somatic cell.",
+    "songTitle": "Macarena",
+    "songArtist": "Los Del Rio",
+    "movieTitle": "Independence Day",
+    "movieGenre": "Sci-Fi",
+    "funTrivia": "Nintendo released the groundbreaking 64-bit N64 console.",
+    "indiaMilestone": "Leander Paes won Olympic Bronze in Men's Singles Tennis at the Atlanta Olympics.",
+    "topIndianCity": {
+      "name": "Goa",
+      "highlight": "Coastal sun-kissed beaches and vibrant music festivals.",
+      "imageUrl": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1997": {
+    "year": 1997,
+    "worldEvent": "Deep Blue defeated Garry Kasparov in chess; Harry Potter was first published.",
+    "songTitle": "Candle in the Wind 1997",
+    "songArtist": "Elton John",
+    "movieTitle": "Titanic",
+    "movieGenre": "Romance Drama",
+    "funTrivia": "Netflix was founded as a DVD rental mail service.",
+    "indiaMilestone": "India celebrated 50 Years of Independence with golden jubilee national celebrations.",
+    "topIndianCity": {
+      "name": "Jaipur",
+      "highlight": "Grand royal celebrations, illuminated Amber Fort, and heritage textile bazaars.",
+      "imageUrl": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1998": {
+    "year": 1998,
+    "worldEvent": "Google was officially incorporated; the International Space Station began orbital assembly.",
+    "songTitle": "...Baby One More Time",
+    "songArtist": "Britney Spears",
+    "movieTitle": "Saving Private Ryan",
+    "movieGenre": "War Drama",
+    "funTrivia": "Apple launched the iconic colorful iMac G3.",
+    "indiaMilestone": "Pokhran-II successful tests established India as a nuclear weapons state with advanced technology.",
+    "topIndianCity": {
+      "name": "Bengaluru",
+      "highlight": "Electronic City software parks driving the global Y2K IT solutions boom.",
+      "imageUrl": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "1999": {
+    "year": 1999,
+    "worldEvent": "The world anticipated the millennium; the Euro currency debuted in international financial markets.",
+    "songTitle": "Smooth",
+    "songArtist": "Santana ft. Rob Thomas",
+    "movieTitle": "The Matrix",
+    "movieGenre": "Sci-Fi Action",
+    "funTrivia": "SpongeBob SquarePants aired its pilot episode on Nickelodeon.",
+    "indiaMilestone": "Indian Armed Forces achieved decisive victory in Operation Vijay during the Kargil Conflict.",
+    "topIndianCity": {
+      "name": "Shimla & Manali",
+      "highlight": "Snowy Himalayan slopes, British colonial architecture, and ridge strolls.",
+      "imageUrl": "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2000": {
+    "year": 2000,
+    "worldEvent": "The Human Genome Project announced the first successful working draft of DNA sequence.",
+    "songTitle": "Say My Name",
+    "songArtist": "Destiny's Child",
+    "movieTitle": "Gladiator",
+    "movieGenre": "Historical Epic",
+    "funTrivia": "The indestructible Nokia 3310 phone was launched.",
+    "indiaMilestone": "Karnam Malleswari became the first Indian woman to win an Olympic medal at Sydney Games.",
+    "topIndianCity": {
+      "name": "Hyderabad (Cyberabad)",
+      "highlight": "HITEC City opening and iconic Charminar biryani heritage.",
+      "imageUrl": "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2001": {
+    "year": 2001,
+    "worldEvent": "Wikipedia was launched; Apple introduced the iPod with '1,000 songs in your pocket'.",
+    "songTitle": "Fallin'",
+    "songArtist": "Alicia Keys",
+    "movieTitle": "Harry Potter and the Sorcerer's Stone",
+    "movieGenre": "Fantasy",
+    "funTrivia": "The Lord of the Rings: The Fellowship of the Ring hit theaters.",
+    "indiaMilestone": "Lagaan nominated for Best Foreign Language Film at the 74th Academy Awards.",
+    "topIndianCity": {
+      "name": "Goa (Chapora Fort)",
+      "highlight": "Dil Chahta Hai sparked a generational youth pilgrimage to Goa's coastal cliffs.",
+      "imageUrl": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2002": {
+    "year": 2002,
+    "worldEvent": "Euro coins and banknotes officially entered circulation across 12 European countries.",
+    "songTitle": "Lose Yourself",
+    "songArtist": "Eminem",
+    "movieTitle": "Spider-Man",
+    "movieGenre": "Superhero",
+    "funTrivia": "Camera phones began going mainstream around the globe.",
+    "indiaMilestone": "The Delhi Metro Rail commenced its very first commercial run on the Red Line.",
+    "topIndianCity": {
+      "name": "New Delhi",
+      "highlight": "World-class metro network modernizing urban transport across the NCR.",
+      "imageUrl": "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2003": {
+    "year": 2003,
+    "worldEvent": "Concorde completed its final commercial supersonic flight; Human Genome fully completed.",
+    "songTitle": "Crazy in Love",
+    "songArtist": "Beyoncé ft. Jay-Z",
+    "movieTitle": "Finding Nemo",
+    "movieGenre": "Animation",
+    "funTrivia": "Myspace was founded and revolutionized online music discovery.",
+    "indiaMilestone": "Team India made a sensational run to the ICC Cricket World Cup Final in South Africa.",
+    "topIndianCity": {
+      "name": "Kochi (Cochin)",
+      "highlight": "Historic Chinese fishing nets and tranquil Kerala backwaters houseboats.",
+      "imageUrl": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2004": {
+    "year": 2004,
+    "worldEvent": "Facebook was launched in a college dorm; NASA's Spirit and Opportunity rovers touched down on Mars.",
+    "songTitle": "Yeah!",
+    "songArtist": "Usher ft. Lil Jon",
+    "movieTitle": "The Incredibles",
+    "movieGenre": "Animation",
+    "funTrivia": "Google launched Gmail with an unprecedented 1GB of free storage.",
+    "indiaMilestone": "Rajyavardhan Singh Rathore clinched India's first individual Olympic Silver in double trap shooting.",
+    "topIndianCity": {
+      "name": "Varanasi",
+      "highlight": "Spiritual illumination along the holy Assi and Dashashwamedh ghats.",
+      "imageUrl": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2005": {
+    "year": 2005,
+    "worldEvent": "The first video ('Me at the zoo') was uploaded to YouTube, creating modern video sharing.",
+    "songTitle": "We Belong Together",
+    "songArtist": "Mariah Carey",
+    "movieTitle": "Harry Potter and the Goblet of Fire",
+    "movieGenre": "Fantasy",
+    "funTrivia": "Reddit was founded by Steve Huffman and Alexis Ohanian.",
+    "indiaMilestone": "Right to Information (RTI) Act enacted, empowering citizen transparency across government.",
+    "topIndianCity": {
+      "name": "Amritsar",
+      "highlight": "Golden Temple (Sri Harmandir Sahib) radiating peace and spiritual langar.",
+      "imageUrl": "https://images.unsplash.com/photo-1588096344356-9b57a9221a69?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2006": {
+    "year": 2006,
+    "worldEvent": "Twitter launched with its first tweet; Pluto was classified as a dwarf planet.",
+    "songTitle": "Hips Don't Lie",
+    "songArtist": "Shakira ft. Wyclef Jean",
+    "movieTitle": "Pirates of the Caribbean: Dead Man's Chest",
+    "movieGenre": "Action Fantasy",
+    "funTrivia": "Nintendo introduced the motion-controlled Wii console.",
+    "indiaMilestone": "Launch of the National Rural Employment Guarantee Scheme (MGNREGS).",
+    "topIndianCity": {
+      "name": "Mysuru (Mysore)",
+      "highlight": "Grand illuminated Mysore Palace during the Dussehra festival.",
+      "imageUrl": "https://images.unsplash.com/photo-1600100397608-f010e47f5256?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2007": {
+    "year": 2007,
+    "worldEvent": "Steve Jobs unveiled the original iPhone, transforming mobile technology forever.",
+    "songTitle": "Umbrella",
+    "songArtist": "Rihanna ft. Jay-Z",
+    "movieTitle": "Transformers",
+    "movieGenre": "Action Sci-Fi",
+    "funTrivia": "Harry Potter and the Deathly Hallows sold 11 million copies in 24 hours.",
+    "indiaMilestone": "MS Dhoni led young Team India to win the inaugural ICC Men's T20 World Cup in Johannesburg.",
+    "topIndianCity": {
+      "name": "Mumbai",
+      "highlight": "Bandra-Worli sea link construction and open-top victory bus parade for Team India.",
+      "imageUrl": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2008": {
+    "year": 2008,
+    "worldEvent": "The Large Hadron Collider at CERN fired its first particle beams; Beijing Olympics opened.",
+    "songTitle": "Viva La Vida",
+    "songArtist": "Coldplay",
+    "movieTitle": "The Dark Knight",
+    "movieGenre": "Action Thriller",
+    "funTrivia": "Spotify debuted its music streaming service in Scandinavia.",
+    "indiaMilestone": "ISRO launched Chandrayaan-1, which made the historic discovery of water molecules on the Moon.",
+    "topIndianCity": {
+      "name": "Jaipur",
+      "highlight": "Inaugural Indian Premier League (IPL) won by Rajasthan Royals at SMS Stadium.",
+      "imageUrl": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2009": {
+    "year": 2009,
+    "worldEvent": "Avatar revolutionized 3D cinema; the genesis block of the Bitcoin network was mined.",
+    "songTitle": "Poker Face",
+    "songArtist": "Lady Gaga",
+    "movieTitle": "Avatar",
+    "movieGenre": "Sci-Fi Epic",
+    "funTrivia": "WhatsApp was founded by Jan Koum and Brian Acton.",
+    "indiaMilestone": "A.R. Rahman won 2 Academy Awards (Best Original Score and Song) for Slumdog Millionaire.",
+    "topIndianCity": {
+      "name": "Ladakh (Pangong Tso)",
+      "highlight": "Turquoise high-altitude Himalayan lakes popularized by the climax of 3 Idiots.",
+      "imageUrl": "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2010": {
+    "year": 2010,
+    "worldEvent": "Apple released the first iPad; Instagram was created and launched to the App Store.",
+    "songTitle": "Rolling in the Deep",
+    "songArtist": "Adele",
+    "movieTitle": "Inception",
+    "movieGenre": "Sci-Fi Thriller",
+    "funTrivia": "Angry Birds became a global gaming phenomenon.",
+    "indiaMilestone": "India hosted the XIX Commonwealth Games in New Delhi, securing 101 medals.",
+    "topIndianCity": {
+      "name": "New Delhi",
+      "highlight": "Spectacular Jawaharlal Nehru Stadium Commonwealth Games opening ceremony.",
+      "imageUrl": "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2011": {
+    "year": 2011,
+    "worldEvent": "NASA retired the Space Shuttle program after 30 years; world population crossed 7 billion.",
+    "songTitle": "Party Rock Anthem",
+    "songArtist": "LMFAO",
+    "movieTitle": "Harry Potter and the Deathly Hallows – Part 2",
+    "movieGenre": "Fantasy Epic",
+    "funTrivia": "Minecraft officially released version 1.0 to worldwide acclaim.",
+    "indiaMilestone": "MS Dhoni hit the iconic winning six at Wankhede Stadium as India won the ICC Cricket World Cup.",
+    "topIndianCity": {
+      "name": "Mumbai",
+      "highlight": "Wankhede Stadium erupting in fireworks and nationwide street carnivals.",
+      "imageUrl": "https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2012": {
+    "year": 2012,
+    "worldEvent": "CERN discovered the Higgs Boson ('God Particle'); Curiosity Rover landed on Mars.",
+    "songTitle": "Somebody That I Used to Know",
+    "songArtist": "Gotye ft. Kimbra",
+    "movieTitle": "The Avengers",
+    "movieGenre": "Superhero Action",
+    "funTrivia": "Gangnam Style became the first YouTube video to hit 1 billion views.",
+    "indiaMilestone": "Mary Kom and Sushil Kumar led India to its highest medal tally at the London Olympics.",
+    "topIndianCity": {
+      "name": "Darjeeling",
+      "highlight": "Toy Train scenic tracks through emerald tea gardens and Kanchenjunga views.",
+      "imageUrl": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2013": {
+    "year": 2013,
+    "worldEvent": "Voyager 1 became the first human-made object to cross into interstellar space.",
+    "songTitle": "Get Lucky",
+    "songArtist": "Daft Punk ft. Pharrell",
+    "movieTitle": "Frozen",
+    "movieGenre": "Animation",
+    "funTrivia": "Grand Theft Auto V grossed $1 billion in its first 3 days of release.",
+    "indiaMilestone": "ISRO launched the Mars Orbiter Mission (Mangalyaan) on its maiden interplanetary voyage.",
+    "topIndianCity": {
+      "name": "Manali (Solang Valley)",
+      "highlight": "Trekking trails and snowy backpacker paradise inspired by YJHD.",
+      "imageUrl": "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2014": {
+    "year": 2014,
+    "worldEvent": "ESA's Rosetta mission landed the Philae probe on Comet 67P in historic deep space milestone.",
+    "songTitle": "Happy",
+    "songArtist": "Pharrell Williams",
+    "movieTitle": "Interstellar",
+    "movieGenre": "Sci-Fi Epic",
+    "funTrivia": "The ALS Ice Bucket Challenge raised over $115 million worldwide.",
+    "indiaMilestone": "India became the first Asian nation to reach Mars orbit on its very first attempt with Mangalyaan.",
+    "topIndianCity": {
+      "name": "Bengaluru",
+      "highlight": "ISRO Telemetry Command Centre celebrating historic Mars orbital insertion.",
+      "imageUrl": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2015": {
+    "year": 2015,
+    "worldEvent": "NASA's New Horizons spacecraft completed the first flyby of Pluto, revealing its icy heart.",
+    "songTitle": "Uptown Funk",
+    "songArtist": "Mark Ronson ft. Bruno Mars",
+    "movieTitle": "Star Wars: The Force Awakens",
+    "movieGenre": "Sci-Fi Fantasy",
+    "funTrivia": "Water on Mars was confirmed through flowing briny streaks by NASA.",
+    "indiaMilestone": "Launch of the Digital India initiative, transforming high-speed broadband connectivity nationwide.",
+    "topIndianCity": {
+      "name": "Hyderabad",
+      "highlight": "Ramoji Film City and the pan-Indian cinematic phenomenon of Baahubali.",
+      "imageUrl": "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2016": {
+    "year": 2016,
+    "worldEvent": "LIGO detected gravitational waves for the first time, proving Einstein's 100-year-old prediction.",
+    "songTitle": "Closer",
+    "songArtist": "The Chainsmokers ft. Halsey",
+    "movieTitle": "Captain America: Civil War",
+    "movieGenre": "Superhero Action",
+    "funTrivia": "Pokémon GO took the world by storm with augmented reality street hunts.",
+    "indiaMilestone": "Launch of Unified Payments Interface (UPI), initiating the world's most successful instant payments revolution.",
+    "topIndianCity": {
+      "name": "Goa",
+      "highlight": "Vibrant beach shacks, night markets, and music festivals.",
+      "imageUrl": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2017": {
+    "year": 2017,
+    "worldEvent": "Astronomers detected the interstellar asteroid 'Oumuamua passing through our solar system.",
+    "songTitle": "Shape of You",
+    "songArtist": "Ed Sheeran",
+    "movieTitle": "Coco",
+    "movieGenre": "Animation Fantasy",
+    "funTrivia": "Nintendo Switch was released and revolutionized portable hybrid gaming.",
+    "indiaMilestone": "ISRO created a world record by launching 104 satellites in a single PSLV-C37 mission.",
+    "topIndianCity": {
+      "name": "Ahmedabad",
+      "highlight": "Historic walled city recognized as India's first UNESCO World Heritage City.",
+      "imageUrl": "https://images.unsplash.com/photo-1609137144820-224a1b023f89?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2018": {
+    "year": 2018,
+    "worldEvent": "SpaceX launched Falcon Heavy carrying a Tesla Roadster into orbit around the sun.",
+    "songTitle": "God's Plan",
+    "songArtist": "Drake",
+    "movieTitle": "Avengers: Infinity War",
+    "movieGenre": "Superhero Action",
+    "funTrivia": "France won the FIFA World Cup tournament in Moscow.",
+    "indiaMilestone": "Unveiling of the Statue of Unity (182m) in Gujarat, the tallest statue in the world.",
+    "topIndianCity": {
+      "name": "Kevadia (Statue of Unity)",
+      "highlight": "Engineering marvel on the Narmada river attracting millions of global visitors.",
+      "imageUrl": "https://images.unsplash.com/photo-1627894483216-2138af692e32?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2019": {
+    "year": 2019,
+    "worldEvent": "Event Horizon Telescope captured the first direct photograph of a supermassive black hole.",
+    "songTitle": "Old Town Road",
+    "songArtist": "Lil Nas X ft. Billy Ray Cyrus",
+    "movieTitle": "Avengers: Endgame",
+    "movieGenre": "Superhero Epic",
+    "funTrivia": "Avengers: Endgame shattered global box office records with $2.79 billion.",
+    "indiaMilestone": "Launch of Vande Bharat Express, pioneering semi-high speed indigenously engineered trains.",
+    "topIndianCity": {
+      "name": "Varanasi",
+      "highlight": "First Vande Bharat train flagged off on the New Delhi-Varanasi high-speed corridor.",
+      "imageUrl": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2020": {
+    "year": 2020,
+    "worldEvent": "NASA launched the Perseverance rover to Mars; global digital connection bonded communities.",
+    "songTitle": "Blinding Lights",
+    "songArtist": "The Weeknd",
+    "movieTitle": "Soul",
+    "movieGenre": "Animation Drama",
+    "funTrivia": "Animal Crossing: New Horizons became a beloved global cozy sanctuary.",
+    "indiaMilestone": "Rapid deployment of indigenous digital infrastructure (CoWIN & Aarogya Setu).",
+    "topIndianCity": {
+      "name": "Rishikesh",
+      "highlight": "Serene yoga capital of the world, suspension bridges, and white water rapids.",
+      "imageUrl": "https://images.unsplash.com/photo-1600100397608-f010e47f5256?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2021": {
+    "year": 2021,
+    "worldEvent": "Ingenuity helicopter achieved the first powered, controlled flight on another planet (Mars).",
+    "songTitle": "Levitating",
+    "songArtist": "Dua Lipa",
+    "movieTitle": "Spider-Man: No Way Home",
+    "movieGenre": "Superhero Action",
+    "funTrivia": "James Webb Space Telescope launched on Christmas Day into deep space.",
+    "indiaMilestone": "Neeraj Chopra won historic Olympic Gold in Men's Javelin at the Tokyo 2020 Olympic Games.",
+    "topIndianCity": {
+      "name": "Jaipur",
+      "highlight": "Amber Fort and vibrant royal palaces welcoming nationwide domestic travelers.",
+      "imageUrl": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2022": {
+    "year": 2022,
+    "worldEvent": "James Webb Space Telescope beamed back its first ultra-deep field cosmic images.",
+    "songTitle": "As It Was",
+    "songArtist": "Harry Styles",
+    "movieTitle": "Top Gun: Maverick",
+    "movieGenre": "Aviation Action",
+    "funTrivia": "NASA's DART spacecraft successfully redirected an asteroid in deep space.",
+    "indiaMilestone": "Commissioning of INS Vikrant, India's first indigenously designed and built aircraft carrier.",
+    "topIndianCity": {
+      "name": "Kochi",
+      "highlight": "Historic naval dockyards and Kochi-Muziris contemporary art biennale.",
+      "imageUrl": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2023": {
+    "year": 2023,
+    "worldEvent": "India's Chandrayaan-3 achieved history's first landing near the Moon's South Pole.",
+    "songTitle": "Flowers",
+    "songArtist": "Miley Cyrus",
+    "movieTitle": "Oppenheimer",
+    "movieGenre": "Biographical Drama",
+    "funTrivia": "The 'Barbenheimer' cultural cinematic phenomenon swept worldwide theaters.",
+    "indiaMilestone": "Chandrayaan-3 achieved historic soft landing near Moon's South Pole; India hosted the G20 Summit.",
+    "topIndianCity": {
+      "name": "New Delhi (Bharat Mandapam)",
+      "highlight": "Magnificent Bharat Mandapam hosting world leaders for the G20 New Delhi Declaration.",
+      "imageUrl": "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2024": {
+    "year": 2024,
+    "worldEvent": "Paris hosted the Olympic Games; scientists detected ancient ocean signatures on Jupiter's moons.",
+    "songTitle": "Espresso",
+    "songArtist": "Sabrina Carpenter",
+    "movieTitle": "Dune: Part Two",
+    "movieGenre": "Sci-Fi Epic",
+    "funTrivia": "Next-generation spatial computing interfaces made commercial debuts.",
+    "indiaMilestone": "Team India won the ICC Men's T20 World Cup in Barbados with an undefeated tournament run.",
+    "topIndianCity": {
+      "name": "Ayodhya & Varanasi",
+      "highlight": "Historic cultural revival, sacred ghat illuminations, and modern airport corridor.",
+      "imageUrl": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2025": {
+    "year": 2025,
+    "worldEvent": "Breakthrough commercial fusion energy test achieved continuous net energy surplus.",
+    "songTitle": "Golden Echoes",
+    "songArtist": "Wishora Soundscapes",
+    "movieTitle": "Avatar: Fire and Ash",
+    "movieGenre": "Sci-Fi Epic",
+    "funTrivia": "AI collaborative systems empowered cinematic artistry alongside creators.",
+    "indiaMilestone": "Gaganyaan unmanned orbital qualification flights demonstrated human spaceflight capability.",
+    "topIndianCity": {
+      "name": "Bengaluru & Hyderabad",
+      "highlight": "Deep-tech quantum AI hubs, rooftop garden cafes, and thriving innovation districts.",
+      "imageUrl": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=600&auto=format&fit=crop&q=80"
+    }
+  },
+  "2026": {
+    "year": 2026,
+    "worldEvent": "Humanity continues unlocking bold creative horizons, surrounded by warmth and wonder ✨",
+    "songTitle": "Infinite Horizon",
+    "songArtist": "Cinema Ensemble",
+    "movieTitle": "WISHORA The Experience",
+    "movieGenre": "Life & Celebration",
+    "funTrivia": "You are celebrating another magnificent, golden milestone chapter today!",
+    "indiaMilestone": "India emerges as a $5 Trillion economic powerhouse with high-speed bullet train corridors and AI India Stack.",
+    "topIndianCity": {
+      "name": "Mumbai & Goa",
+      "highlight": "Coastal undersea tunnels, world-class nightlife, and timeless golden sunsets.",
+      "imageUrl": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&auto=format&fit=crop&q=80"
+    }
+  }
+}
