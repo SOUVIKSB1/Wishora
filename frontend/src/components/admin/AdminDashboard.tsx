@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, Users, Music, FileText, Bell, Sparkles, Trash2, 
-  Plus, Search, RefreshCw, Crown, AlertTriangle, Check, X,
-  Play, Pause, Send, ExternalLink, Filter, ShieldAlert, Award
+  Plus, Search, RefreshCw, AlertTriangle, Check, X,
+  Play, Pause, Send, ExternalLink, Filter, ShieldAlert, LogOut,
+  Upload, Volume2, Pencil, CheckCircle2, Music2
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
@@ -10,12 +11,13 @@ import { VelvetButton } from '../ui/VelvetButton.js';
 
 interface AdminDashboardProps {
   currentUser: any;
+  onLogout?: () => void;
   onClose?: () => void;
 }
 
-type AdminTab = 'users' | 'notifications' | 'music' | 'templates' | 'stats';
+type AdminTab = 'users' | 'notifications' | 'music' | 'templates';
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onLogout }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -27,36 +29,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
   const [templates, setTemplates] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Search & Filter
+  // Search
   const [userSearch, setUserSearch] = useState('');
-  const [userPlanFilter, setUserPlanFilter] = useState('all');
 
   // Audio Playback
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [audioElem, setAudioElem] = useState<HTMLAudioElement | null>(null);
 
-  // Modals
+  // Song Upload File Tool States
   const [showAddMusicModal, setShowAddMusicModal] = useState(false);
+  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [musicFilePreviewUrl, setMusicFilePreviewUrl] = useState<string>('');
+  const [isReadingAudio, setIsReadingAudio] = useState(false);
   const [newMusic, setNewMusic] = useState({
     title: '',
     artist: 'Wishora Studio',
     genre: 'Birthday Classics',
     mood_tags: 'joyful, celebration',
     storage_url: '',
-    duration: 60,
-    is_premium: false
+    duration: 60
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Wish Template Create & Edit Modals
   const [showAddTemplateModal, setShowAddTemplateModal] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     title: '',
     content: '',
     category: 'heartfelt',
     tone: 'warm',
-    language: 'en',
-    is_premium: false
+    language: 'en'
   });
 
+  const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
+  const [editTemplateForm, setEditTemplateForm] = useState({
+    title: '',
+    content: '',
+    category: 'heartfelt',
+    tone: 'warm',
+    language: 'en'
+  });
+
+  // Notifications Modal
   const [showSendNotifModal, setShowSendNotifModal] = useState(false);
   const [targetUser, setTargetUser] = useState<any | null>(null);
   const [notifForm, setNotifForm] = useState({
@@ -65,6 +80,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
     type: 'announcement'
   });
 
+  // User Deletion Modal
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<any | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
@@ -106,16 +122,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
   }, []);
 
   // 1. User Management Actions
-  const handleUpdateUserPlan = async (userId: string, newPlan: string) => {
-    try {
-      await api.updateUserPlan(userId, newPlan);
-      showToast('success', `User upgraded/changed to ${newPlan.toUpperCase()}`);
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: newPlan } : u));
-    } catch (err: any) {
-      showToast('error', err?.message || 'Failed to update user plan');
-    }
-  };
-
   const handleToggleUserRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
     try {
@@ -139,11 +145,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
     }
   };
 
-  // 2. Music Actions
+  // 2. Music Upload Tool Handler
+  const handleAudioFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsReadingAudio(true);
+    setMusicFile(file);
+
+    // Auto fill title if empty
+    const rawName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    if (!newMusic.title) {
+      setNewMusic(prev => ({ ...prev, title: rawName }));
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setMusicFilePreviewUrl(dataUrl);
+      setNewMusic(prev => ({ ...prev, storage_url: dataUrl }));
+
+      // Detect audio duration
+      const tempAudio = new Audio(dataUrl);
+      tempAudio.onloadedmetadata = () => {
+        const dur = Math.round(tempAudio.duration) || 60;
+        setNewMusic(prev => ({ ...prev, duration: dur }));
+        setIsReadingAudio(false);
+      };
+      tempAudio.onerror = () => {
+        setIsReadingAudio(false);
+      };
+    };
+    reader.onerror = () => {
+      setIsReadingAudio(false);
+      showToast('error', 'Could not read audio file');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreateMusic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMusic.title || !newMusic.storage_url) {
-      showToast('error', 'Title and Storage URL are required');
+      showToast('error', 'Please upload a valid audio song file');
       return;
     }
     try {
@@ -154,20 +197,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         genre: newMusic.genre,
         storage_url: newMusic.storage_url,
         duration: Number(newMusic.duration) || 60,
-        mood_tags: tags,
-        is_premium: newMusic.is_premium
+        mood_tags: tags
       });
       showToast('success', `Track "${newMusic.title}" published to library`);
       setMusicTracks(prev => [res.track, ...prev]);
       setShowAddMusicModal(false);
+      setMusicFile(null);
+      setMusicFilePreviewUrl('');
       setNewMusic({
         title: '',
         artist: 'Wishora Studio',
         genre: 'Birthday Classics',
         mood_tags: 'joyful, celebration',
         storage_url: '',
-        duration: 60,
-        is_premium: false
+        duration: 60
       });
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to publish music track');
@@ -196,18 +239,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
       audioElem.pause();
     }
 
-    if (track.storage_url?.startsWith('http')) {
+    if (track.storage_url) {
       const audio = new Audio(track.storage_url);
-      audio.play().catch(() => showToast('error', 'Could not play audio track URL'));
+      audio.play().catch(() => showToast('error', 'Could not play audio track'));
       audio.onended = () => setPlayingTrackId(null);
       setAudioElem(audio);
       setPlayingTrackId(track.id);
-    } else {
-      showToast('success', `Previewing track: ${track.title}`);
     }
   };
 
-  // 3. Wish Template Actions
+  // 3. Wish Template Actions (Create, Edit, Delete)
   const handleCreateTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTemplate.title || !newTemplate.content) {
@@ -224,11 +265,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         content: '',
         category: 'heartfelt',
         tone: 'warm',
-        language: 'en',
-        is_premium: false
+        language: 'en'
       });
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to create template');
+    }
+  };
+
+  const handleOpenEditTemplate = (tpl: any) => {
+    setEditingTemplate(tpl);
+    setEditTemplateForm({
+      title: tpl.title || '',
+      content: tpl.content || '',
+      category: tpl.category || 'heartfelt',
+      tone: tpl.tone || 'warm',
+      language: tpl.language || 'en'
+    });
+  };
+
+  const handleSaveEditTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTemplate) return;
+    try {
+      const res = await api.updateAdminTemplate(editingTemplate.id, editTemplateForm);
+      showToast('success', `Template updated successfully`);
+      setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? res.template : t));
+      setEditingTemplate(null);
+    } catch (err: any) {
+      showToast('error', err?.message || 'Failed to update template');
     }
   };
 
@@ -279,16 +343,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
 
   // Filtered Users
   const filteredUsers = users.filter(u => {
-    const matchesSearch = 
+    return (
       (u.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.display_name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
-      (u.id || '').toLowerCase().includes(userSearch.toLowerCase());
-    const matchesPlan = userPlanFilter === 'all' || u.plan === userPlanFilter;
-    return matchesSearch && matchesPlan;
+      (u.id || '').toLowerCase().includes(userSearch.toLowerCase())
+    );
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16">
       {/* Toast Alert */}
       {statusMessage && (
         <div className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl shadow-2xl border flex items-center gap-3 animate-slideUp text-sm font-medium ${
@@ -301,7 +364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         </div>
       )}
 
-      {/* ─── ADMIN HEADER WITH LIVE METRICS ─── */}
+      {/* ─── ADMIN HEADER WITH LIVE METRICS & LOGOUT ─── */}
       <div className="relative rounded-3xl bg-gradient-to-br from-[#181124] via-[#100c1a] to-[#1a1429] border border-amber-400/30 p-6 sm:p-8 overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.15)]">
         <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" opacity={0.7} />
         <AuraHalfCircle position="bottom-left" variant="rose-gold" size="md" opacity={0.5} />
@@ -311,17 +374,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[11px] font-mono font-black uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                 <ShieldCheck size={14} className="text-amber-400" />
-                MASTER ADMIN CONTROL
+                CONCEALED MASTER ADMIN CONTROL
               </span>
               <span className="text-xs font-mono text-text-3">
                 Logged in as <strong className="text-amber-300">{currentUser?.email}</strong>
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight">
-              Wishora <span className="gold-gradient-text">Command Center</span>
+              Wishora <span className="gold-gradient-text">Administration Suite</span>
             </h1>
             <p className="text-xs sm:text-sm text-text-2 max-w-xl">
-              Manage platform users, upgrade VIP subscriptions, push updates, manage audio library & templates, and broadcast announcements.
+              Strictly restricted admin operations. Direct audio file uploads, text template editors, bulk bulletins, and lifetime multi-tenant controls.
             </p>
           </div>
 
@@ -332,7 +395,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.15] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>Refresh Stats</span>
+              <span>Refresh</span>
             </button>
             <button
               onClick={() => { setTargetUser(null); setShowSendNotifModal(true); }}
@@ -341,11 +404,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
               <Send size={14} />
               <span>Broadcast Alert</span>
             </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all cursor-pointer"
+                title="Log Out Administrator Session"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Live System Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-white/[0.1]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6 pt-6 border-t border-white/[0.1]">
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
             <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <Users size={12} className="text-sky-400" />
@@ -360,14 +433,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
               WISHES CREATED
             </span>
             <span className="text-2xl font-display font-black text-amber-300 mt-1">{stats?.total_wishes ?? '...'}</span>
-          </div>
-
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
-              <Crown size={12} className="text-purple-400" />
-              VIP MEMBERS
-            </span>
-            <span className="text-2xl font-display font-black text-purple-300 mt-1">{stats?.active_vip_users ?? '...'}</span>
           </div>
 
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
@@ -399,9 +464,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
       {/* ─── ADMIN TAB SELECTOR ─── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/[0.08]">
         {[
-          { id: 'users', label: 'User Management & VIP Plans', icon: Users, count: users.length },
+          { id: 'users', label: 'User Directory & Moderation', icon: Users, count: users.length },
           { id: 'notifications', label: 'Broadcasts & Direct Messages', icon: Bell, count: notifications.length },
-          { id: 'music', label: 'Music Library Controls', icon: Music, count: musicTracks.length },
+          { id: 'music', label: 'Song Upload & Music Controls', icon: Music, count: musicTracks.length },
           { id: 'templates', label: 'Text Wish Templates', icon: FileText, count: templates.length }
         ].map(tab => {
           const Icon = tab.icon;
@@ -427,13 +492,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════
-          TAB 1: USER MANAGEMENT & VIP PLANS
+          TAB 1: USER MANAGEMENT
       ══════════════════════════════════════════════════════════════════ */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-surface-elevated/70 border border-white/[0.1] rounded-2xl">
-            <div className="relative w-full sm:w-80">
+          <div className="flex items-center justify-between gap-3 p-4 bg-surface-elevated/70 border border-white/[0.1] rounded-2xl">
+            <div className="relative w-full sm:w-96">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-3" />
               <input
                 type="text"
@@ -443,20 +507,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                 className="w-full bg-void border border-white/[0.1] rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400 transition-colors"
               />
             </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-[11px] font-mono text-text-3">PLAN:</span>
-              <select
-                value={userPlanFilter}
-                onChange={e => setUserPlanFilter(e.target.value)}
-                className="bg-void border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400 cursor-pointer"
-              >
-                <option value="all">All Plans ({users.length})</option>
-                <option value="free">Free</option>
-                <option value="pro">Pro</option>
-                <option value="vip">VIP</option>
-                <option value="executive">Executive</option>
-              </select>
+            <div className="text-xs font-mono text-text-3">
+              Total registered: <strong className="text-white">{filteredUsers.length}</strong>
             </div>
           </div>
 
@@ -468,9 +520,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                   <tr className="border-b border-white/[0.08] bg-void/60 text-[10px] font-mono text-text-3 uppercase tracking-wider">
                     <th className="py-3.5 px-4">User</th>
                     <th className="py-3.5 px-3">Role</th>
-                    <th className="py-3.5 px-3">VIP Plan Tier</th>
                     <th className="py-3.5 px-3 text-center">Wishes</th>
                     <th className="py-3.5 px-3 text-center">Contacts</th>
+                    <th className="py-3.5 px-3 text-center">Reactions</th>
                     <th className="py-3.5 px-3">Registered</th>
                     <th className="py-3.5 px-4 text-right">Admin Actions</th>
                   </tr>
@@ -512,33 +564,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                         </button>
                       </td>
 
-                      <td className="py-3.5 px-3">
-                        <select
-                          value={u.plan || 'free'}
-                          onChange={e => handleUpdateUserPlan(u.id, e.target.value)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border outline-none cursor-pointer transition-all ${
-                            u.plan === 'executive'
-                              ? 'bg-amber-400/20 text-amber-300 border-amber-400/50'
-                              : u.plan === 'vip'
-                              ? 'bg-purple-400/20 text-purple-300 border-purple-400/50'
-                              : u.plan === 'pro'
-                              ? 'bg-sky-400/20 text-sky-300 border-sky-400/50'
-                              : 'bg-void text-text-2 border-white/[0.1]'
-                          }`}
-                        >
-                          <option value="free" className="bg-void text-white">Free Tier</option>
-                          <option value="pro" className="bg-void text-sky-300">Pro Tier</option>
-                          <option value="vip" className="bg-void text-purple-300">VIP Tier</option>
-                          <option value="executive" className="bg-void text-amber-300">Executive VIP</option>
-                        </select>
-                      </td>
-
                       <td className="py-3.5 px-3 text-center font-mono font-bold text-amber-300">
                         {u.wish_count || 0}
                       </td>
 
                       <td className="py-3.5 px-3 text-center font-mono text-sky-300">
                         {u.contact_count || 0}
+                      </td>
+
+                      <td className="py-3.5 px-3 text-center font-mono text-pink-300">
+                        {u.reaction_count || 0}
                       </td>
 
                       <td className="py-3.5 px-3 font-mono text-[11px] text-text-3">
@@ -586,14 +621,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Sent Announcements & Bulletins ({notifications.length})
+              Sent Bulletins & Direct Messages ({notifications.length})
             </h3>
             <button
               onClick={() => { setTargetUser(null); setShowSendNotifModal(true); }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-xs font-bold transition-all cursor-pointer"
             >
               <Plus size={14} />
-              <span>Compose Message</span>
+              <span>Compose Bulletin</span>
             </button>
           </div>
 
@@ -635,20 +670,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
       )}
 
       {/* ══════════════════════════════════════════════════════════════════
-          TAB 3: MUSIC LIBRARY CONTROLLER
+          TAB 3: MUSIC LIBRARY CONTROLLER WITH AUDIO UPLOAD TOOL
       ══════════════════════════════════════════════════════════════════ */}
       {activeTab === 'music' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Live Music Tracks ({musicTracks.length})
+              Live Sound Library ({musicTracks.length} Tracks)
             </h3>
             <button
               onClick={() => setShowAddMusicModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black transition-all cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black transition-all cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:scale-105 active:scale-95"
             >
-              <Plus size={14} />
-              <span>Add New Track</span>
+              <Upload size={14} />
+              <span>Upload New Song</span>
             </button>
           </div>
 
@@ -679,13 +714,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
 
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.06] text-[10px] font-mono">
                   <span className="px-2 py-0.5 rounded bg-white/[0.06] text-text-2">{t.genre || 'Soundtrack'}</span>
-                  {t.is_premium ? (
-                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
-                      👑 VIP ONLY
-                    </span>
-                  ) : (
-                    <span className="text-emerald-400">FREE FOR ALL</span>
-                  )}
+                  <span className="text-emerald-400 font-bold">● ACTIVE IN ENGINE</span>
                 </div>
               </div>
             ))}
@@ -694,7 +723,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
       )}
 
       {/* ══════════════════════════════════════════════════════════════════
-          TAB 4: TEXT WISH TEMPLATES
+          TAB 4: TEXT WISH TEMPLATES (WITH EDIT & CREATE)
       ══════════════════════════════════════════════════════════════════ */}
       {activeTab === 'templates' && (
         <div className="space-y-4">
@@ -704,7 +733,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
             </h3>
             <button
               onClick={() => setShowAddTemplateModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black transition-all cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black transition-all cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:scale-105 active:scale-95"
             >
               <Plus size={14} />
               <span>Create Template</span>
@@ -720,21 +749,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                       <span className="px-2 py-0.5 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[9px] font-mono font-bold uppercase">
                         {tpl.category} • {tpl.tone}
                       </span>
-                      {tpl.is_premium ? (
-                        <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 text-[9px] font-mono font-bold">
-                          VIP
-                        </span>
-                      ) : null}
                     </div>
                     <h4 className="text-sm font-bold text-white">{tpl.title}</h4>
                   </div>
 
-                  <button
-                    onClick={() => handleDeleteTemplate(tpl.id, tpl.title)}
-                    className="p-1 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEditTemplate(tpl)}
+                      title="Edit Template"
+                      className="p-1.5 rounded-lg text-text-3 hover:text-amber-300 hover:bg-amber-400/10 transition-colors cursor-pointer"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(tpl.id, tpl.title)}
+                      title="Delete Template"
+                      className="p-1.5 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
 
                 <p className="text-xs text-text-2 leading-relaxed italic">"{tpl.content}"</p>
@@ -744,47 +778,112 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         </div>
       )}
 
-      {/* ─── MODAL 1: ADD MUSIC ─── */}
+      {/* ─── MODAL 1: PROPER SONG UPLOAD TOOL (NO RAW URL) ─── */}
       {showAddMusicModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
-          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/90 backdrop-blur-xl">
+          <div className="relative w-full max-w-lg bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Music size={18} className="text-amber-400" />
-                <span>Add Audio Track</span>
+                <Music2 size={20} className="text-amber-400" />
+                <span>Upload Audio Song File</span>
               </h3>
-              <button onClick={() => setShowAddMusicModal(false)} className="text-text-3 hover:text-white cursor-pointer">
+              <button onClick={() => setShowAddMusicModal(false)} className="text-text-3 hover:text-white cursor-pointer p-1">
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateMusic} className="space-y-3">
+            <form onSubmit={handleCreateMusic} className="space-y-4">
+              {/* File Upload Drop Zone */}
               <div>
-                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Track Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Midnight Sunset Symphony"
-                  value={newMusic.title}
-                  onChange={e => setNewMusic({ ...newMusic, title: e.target.value })}
-                  className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                />
+                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1.5">
+                  SELECT AUDIO FILE (.MP3, .WAV, .M4A, .AAC, .FLAC, .OGG)
+                </label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer ${
+                    musicFile 
+                      ? 'border-amber-400/70 bg-amber-400/[0.08]' 
+                      : 'border-white/[0.15] hover:border-amber-400/50 hover:bg-white/[0.02]'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+                    className="hidden"
+                    onChange={handleAudioFileSelected}
+                  />
+
+                  {musicFile ? (
+                    <div className="space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-amber-400 text-void flex items-center justify-center mx-auto shadow-glow-sm">
+                        <Volume2 size={20} />
+                      </div>
+                      <div className="text-xs font-bold text-white truncate max-w-xs mx-auto">
+                        {musicFile.name}
+                      </div>
+                      <div className="text-[10px] font-mono text-amber-300">
+                        {Math.round(musicFile.size / 1024)} KB • Duration: {newMusic.duration}s
+                      </div>
+                      <span className="inline-block text-[10px] font-mono text-text-3 underline">
+                        Click to choose another song
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="w-10 h-10 rounded-2xl bg-white/[0.06] text-amber-400 flex items-center justify-center mx-auto">
+                        <Upload size={18} />
+                      </div>
+                      <p className="text-xs font-bold text-white">
+                        Click to browse or drop an audio song
+                      </p>
+                      <p className="text-[10px] font-mono text-text-3">
+                        MP3, WAV, M4A, FLAC supported
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Artist / Composer</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Wishora Orchestra"
-                  value={newMusic.artist}
-                  onChange={e => setNewMusic({ ...newMusic, artist: e.target.value })}
-                  className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                />
+              {/* Audio Playback Test Preview */}
+              {musicFilePreviewUrl && (
+                <div className="p-3 bg-void/80 border border-white/[0.1] rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="text-xs font-bold text-white">Live Audio Loaded</span>
+                  </div>
+                  <audio controls src={musicFilePreviewUrl} className="h-8 max-w-[220px]" />
+                </div>
+              )}
+
+              {/* Metadata Fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Song Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Midnight Sunset Melody"
+                    value={newMusic.title}
+                    onChange={e => setNewMusic({ ...newMusic, title: e.target.value })}
+                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Artist / Composer</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Wishora Orchestra"
+                    value={newMusic.artist}
+                    onChange={e => setNewMusic({ ...newMusic, artist: e.target.value })}
+                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Genre</label>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Genre Category</label>
                   <input
                     type="text"
                     placeholder="e.g., Lo-fi Chill"
@@ -794,51 +893,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Duration (sec)</label>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Mood Tags</label>
                   <input
-                    type="number"
-                    value={newMusic.duration}
-                    onChange={e => setNewMusic({ ...newMusic, duration: Number(e.target.value) })}
+                    type="text"
+                    placeholder="e.g., happy, celebratory"
+                    value={newMusic.mood_tags}
+                    onChange={e => setNewMusic({ ...newMusic, mood_tags: e.target.value })}
                     className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Audio URL / Storage Link</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="https://... or synth://track_name"
-                  value={newMusic.storage_url}
-                  onChange={e => setNewMusic({ ...newMusic, storage_url: e.target.value })}
-                  className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="is_prem"
-                  checked={newMusic.is_premium}
-                  onChange={e => setNewMusic({ ...newMusic, is_premium: e.target.checked })}
-                  className="rounded border-white/[0.2] bg-void text-amber-400 focus:ring-0 cursor-pointer"
-                />
-                <label htmlFor="is_prem" className="text-xs text-text-2 font-medium cursor-pointer">
-                  Require VIP Subscription for this track
-                </label>
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddMusicModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-text-3 hover:text-white cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-text-3 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
-                <VelvetButton type="submit" variant="glow" size="sm">
-                  Publish Track
+                <VelvetButton 
+                  type="submit" 
+                  variant="glow" 
+                  size="md"
+                  disabled={!newMusic.storage_url || isReadingAudio}
+                >
+                  <Upload size={14} />
+                  <span>Publish Song to App</span>
                 </VelvetButton>
               </div>
             </form>
@@ -846,7 +927,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         </div>
       )}
 
-      {/* ─── MODAL 2: ADD TEMPLATE ─── */}
+      {/* ─── MODAL 2: CREATE TEMPLATE ─── */}
       {showAddTemplateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
           <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
@@ -866,7 +947,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                 <input
                   type="text"
                   required
-                  placeholder="e.g., Midnight Stars & Memories"
+                  placeholder="e.g., Starlight & Golden Memories"
                   value={newTemplate.title}
                   onChange={e => setNewTemplate({ ...newTemplate, title: e.target.value })}
                   className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
@@ -906,11 +987,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Wish Text Message</label>
+                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Wish Text Content</label>
                 <textarea
                   required
                   rows={4}
-                  placeholder="Enter the full heartfelt wish message..."
+                  placeholder="Type the full wish message..."
                   value={newTemplate.content}
                   onChange={e => setNewTemplate({ ...newTemplate, content: e.target.value })}
                   className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400 leading-relaxed"
@@ -934,7 +1015,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         </div>
       )}
 
-      {/* ─── MODAL 3: SEND NOTIFICATION (BULK OR DIRECT) ─── */}
+      {/* ─── MODAL 3: EDIT TEMPLATE ─── */}
+      {editingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
+          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Pencil size={18} className="text-amber-400" />
+                <span>Edit Wish Template</span>
+              </h3>
+              <button onClick={() => setEditingTemplate(null)} className="text-text-3 hover:text-white cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditTemplate} className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editTemplateForm.title}
+                  onChange={e => setEditTemplateForm({ ...editTemplateForm, title: e.target.value })}
+                  className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Category</label>
+                  <select
+                    value={editTemplateForm.category}
+                    onChange={e => setEditTemplateForm({ ...editTemplateForm, category: e.target.value })}
+                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-amber-400 cursor-pointer"
+                  >
+                    <option value="heartfelt">Heartfelt</option>
+                    <option value="playful">Playful / Humorous</option>
+                    <option value="poetic">Poetic</option>
+                    <option value="milestone">Milestone</option>
+                    <option value="romantic">Romantic</option>
+                    <option value="friendship">Friendship</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Tone</label>
+                  <select
+                    value={editTemplateForm.tone}
+                    onChange={e => setEditTemplateForm({ ...editTemplateForm, tone: e.target.value })}
+                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-amber-400 cursor-pointer"
+                  >
+                    <option value="warm">Warm</option>
+                    <option value="humorous">Humorous</option>
+                    <option value="nostalgic">Nostalgic</option>
+                    <option value="inspirational">Inspirational</option>
+                    <option value="intimate">Intimate</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Wish Text Content</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editTemplateForm.content}
+                  onChange={e => setEditTemplateForm({ ...editTemplateForm, content: e.target.value })}
+                  className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400 leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTemplate(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-text-3 hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <VelvetButton type="submit" variant="glow" size="sm">
+                  Save Changes
+                </VelvetButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 4: SEND NOTIFICATION (BULK OR DIRECT) ─── */}
       {showSendNotifModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
           <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
@@ -962,7 +1129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
               </div>
             ) : (
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200">
-                📢 This bulletin will be broadcast to all registered Wishora directors simultaneously.
+                📢 This bulletin will be broadcast to all registered Wishora users simultaneously.
               </div>
             )}
 
@@ -984,7 +1151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                 <textarea
                   required
                   rows={4}
-                  placeholder="Type your official announcement or personalized gift note..."
+                  placeholder="Type your official announcement or personalized message..."
                   value={notifForm.message}
                   onChange={e => setNotifForm({ ...notifForm, message: e.target.value })}
                   className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400 leading-relaxed"
@@ -1008,7 +1175,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
         </div>
       )}
 
-      {/* ─── MODAL 4: PERMANENT TERMINATE USER CONFIRMATION ─── */}
+      {/* ─── MODAL 5: PERMANENT TERMINATE USER CONFIRMATION ─── */}
       {deleteConfirmUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/90 backdrop-blur-xl">
           <div className="relative w-full max-w-md bg-surface-elevated border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
@@ -1025,8 +1192,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                 ⚠️ This will permanently erase:
                 <ul className="list-disc list-inside mt-1 space-y-0.5">
                   <li>All wishes created by this user ({deleteConfirmUser.wish_count || 0})</li>
-                  <li>All contacts & birthday reminders ({deleteConfirmUser.contact_count || 0})</li>
-                  <li>All photo albums, memory reels, and voice/video reactions</li>
+                  <li>All contacts & reminders ({deleteConfirmUser.contact_count || 0})</li>
+                  <li>All photo albums, memory reels, and reactions</li>
                 </ul>
               </div>
             </div>

@@ -198,6 +198,17 @@ export function App() {
     );
   }
 
+  // ─── DEDICATED EXCLUSIVE ADMIN INTERFACE (CONCEALED FOR ADMINS ONLY) ───
+  if (user?.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-void text-text-1 flex flex-col selection:bg-accent selection:text-void relative overflow-x-hidden p-4 sm:p-6">
+        <ParticleField density={25} colors={['#D4AF37', '#9333EA', '#0284C7']} />
+        <AdminDashboard currentUser={user} onLogout={handleLogout} />
+      </div>
+    );
+  }
+
+  // ─── STANDARD USER INTERFACE (REGULAR USERS) ───
   return (
     <div className="min-h-screen bg-void text-text-1 flex flex-col selection:bg-accent selection:text-void relative overflow-x-hidden">
       {/* Ambient Particle Field in Background */}
@@ -226,22 +237,6 @@ export function App() {
 
           {/* Header Quick Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Admin Badge/Access if Admin */}
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab(activeTab === 'admin' ? 'home' : 'admin')}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                  activeTab === 'admin'
-                    ? 'bg-amber-400 text-void border-amber-400 font-extrabold shadow-[0_0_20px_rgba(212,175,55,0.5)] scale-105'
-                    : 'bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30'
-                }`}
-                title="Master Admin Controls"
-              >
-                <ShieldCheck size={14} />
-                <span>{activeTab === 'admin' ? 'Exit Admin' : 'Admin Controls'}</span>
-              </button>
-            )}
-
             {/* Notification Center Bell */}
             {user && (
               <button
@@ -348,17 +343,10 @@ export function App() {
               onLogout={handleLogout}
             />
           )}
-
-          {activeTab === 'admin' && user?.role === 'admin' && (
-            <AdminDashboard
-              currentUser={user}
-              onClose={() => setActiveTab('home')}
-            />
-          )}
         </main>
       </div>
 
-      {/* Floating Bottom Navigation Bar */}
+      {/* Floating Bottom Navigation Bar (Apple-Grade Responsive Dock) */}
       <nav className="fixed bottom-3 sm:bottom-4 inset-x-0 z-40 max-w-sm sm:max-w-md mx-auto px-3 sm:px-4 pointer-events-none pb-[env(safe-area-inset-bottom,0px)]">
         <div className="bg-[#0B0B14]/90 border border-white/[0.14] rounded-full p-1.5 sm:p-2 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_25px_rgba(200,169,110,0.15)] flex items-center justify-around pointer-events-auto">
           {[
@@ -366,7 +354,6 @@ export function App() {
             { key: 'wishbook', label: 'Wishbook', icon: <BookOpen size={17} /> },
             { key: 'contacts', label: 'Contacts', icon: <Users size={17} /> },
             { key: 'profile', label: 'Director', icon: <User size={17} /> },
-            ...(user?.role === 'admin' ? [{ key: 'admin', label: 'Admin', icon: <ShieldCheck size={17} /> }] : []),
           ].map((item) => {
             const isActive = activeTab === item.key;
             return (

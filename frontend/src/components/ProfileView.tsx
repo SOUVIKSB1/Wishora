@@ -226,14 +226,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate,
       </div>
 
       {/* ─── PREMIUM PRO TIER CARTRIDGE ─── */}
-      <div className="relative bg-gradient-to-br from-amber-500/20 via-surface-elevated to-surface border-2 border-amber-400/40 rounded-3xl p-6 backdrop-blur-xl overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.18)]">
+      <div className="relative bg-gradient-to-br from-amber-500/20 via-surface-elevated to-surface border border-amber-400/30 rounded-3xl p-6 backdrop-blur-xl overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.15)]">
         <AuraHalfCircle position="top-right" variant="sunset" size="md" opacity={0.5} />
         <AuraHalfCircle position="bottom-left" variant="gold-purple" size="sm" opacity={0.3} />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-mono tracking-widest uppercase font-bold">
               <Crown size={15} />
-              <span>LIFETIME MEMBERSHIP</span>
+              <span>LIFETIME UNLOCKED</span>
             </div>
             <h3 className="text-xl font-display font-extrabold text-white">WISHORA Cinema Suite</h3>
             <p className="text-xs text-text-2 leading-relaxed max-w-md font-medium">
@@ -242,16 +242,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate,
           </div>
 
           <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
-            <button
-              onClick={() => setPlan(plan === 'premium' ? 'free' : 'premium')}
-              className={`px-5 py-2.5 rounded-full text-xs font-black border transition-all cursor-pointer ${
-                plan === 'premium'
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-void border-amber-300 shadow-[0_0_20px_rgba(212,175,55,0.4)]'
-                  : 'bg-white/[0.08] border-white/[0.14] text-white hover:bg-white/[0.15]'
-              }`}
-            >
-              {plan === 'premium' ? '✓ VIP Active' : 'Activate VIP'}
-            </button>
+            <div className="px-4 py-2 rounded-full text-xs font-bold bg-amber-500/15 border border-amber-400/40 text-amber-300 flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+              <Sparkles size={13} />
+              <span>Full Access Unlocked</span>
+            </div>
           </div>
         </div>
       </div>
