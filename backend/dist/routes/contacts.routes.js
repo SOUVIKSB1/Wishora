@@ -103,6 +103,32 @@ export async function contactsRoutes(fastify) {
         await db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
         return { success: true, id };
     });
+    // Bulk delete selected contacts
+    fastify.post('/contacts/bulk-delete', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return reply.code(400).send({ error: 'No contact IDs provided for deletion' });
+        }
+        let deletedCount = 0;
+        for (const id of ids) {
+            await db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
+            deletedCount++;
+        }
+        return { success: true, deleted: deletedCount, ids };
+    });
+    // Delete all contacts for current user
+    fastify.delete('/contacts/all', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
+        await db.prepare('DELETE FROM contacts WHERE user_id = ?').run(userId);
+        return { success: true, message: 'All contacts deleted successfully' };
+    });
     // Preview / Parse CSV
     fastify.post('/contacts/csv-preview', async (req) => {
         const body = req.body;

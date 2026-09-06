@@ -8,16 +8,17 @@ import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { getAvatarUrl } from '../../utils/avatar.js';
 import { api } from '../../services/api.js';
 import { downloadWishKeepsake } from '../../utils/downloader.js';
+import { haptic } from '../../utils/haptics.js';
 
 interface WishbookViewProps {
   wishes: Wish[];
   folders: Folder[];
-  onCreateFolder: (name: string, color: string) => void;
-  onDeleteFolder?: (folderId: string) => void;
-  onMoveWishToFolder?: (wishId: string, folderId: string) => void;
+  onCreateFolder: (name: string, color: string) => Promise<void> | void;
+  onDeleteFolder?: (folderId: string) => Promise<void> | void;
+  onMoveWishToFolder?: (wishId: string, folderId: string) => Promise<void> | void;
   onSelectWish: (wish: Wish) => void;
   onPreviewExperience: (slug: string) => void;
-  onDeleteWish: (id: string) => void;
+  onDeleteWish: (id: string) => Promise<void> | void;
   onNewWish: () => void;
 }
 
@@ -37,7 +38,11 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderColor, setNewFolderColor] = useState('#EAB308');
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
+  const [isDeletingFolder, setIsDeletingFolder] = useState(false);
+  const [wishToDelete, setWishToDelete] = useState<Wish | null>(null);
+  const [isDeletingWish, setIsDeletingWish] = useState(false);
   const [openFolderPickerWishId, setOpenFolderPickerWishId] = useState<string | null>(null);
   const [expandedStacks, setExpandedStacks] = useState<Record<string, boolean>>({});
 
@@ -173,21 +178,51 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
     }
   };
 
-  const handleCreateFolderSubmit = (e: React.FormEvent) => {
+  const handleCreateFolderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
-    onCreateFolder(newFolderName.trim(), newFolderColor);
-    setNewFolderName('');
-    setShowNewFolderModal(false);
+    setIsCreatingFolder(true);
+    try {
+      await onCreateFolder(newFolderName.trim(), newFolderColor);
+      haptic.success();
+      setNewFolderName('');
+      setShowNewFolderModal(false);
+    } catch (err) {
+      console.error('Failed to create folder:', err);
+    } finally {
+      setIsCreatingFolder(false);
+    }
   };
 
-  const handleConfirmDeleteFolder = () => {
+  const handleConfirmDeleteFolder = async () => {
     if (folderToDelete && onDeleteFolder) {
-      onDeleteFolder(folderToDelete.id);
-      if (selectedFolderId === folderToDelete.id) {
-        setSelectedFolderId(null);
+      setIsDeletingFolder(true);
+      try {
+        await onDeleteFolder(folderToDelete.id);
+        if (selectedFolderId === folderToDelete.id) {
+          setSelectedFolderId(null);
+        }
+        haptic.medium();
+        setFolderToDelete(null);
+      } catch (err) {
+        console.error('Failed to delete folder:', err);
+      } finally {
+        setIsDeletingFolder(false);
       }
-      setFolderToDelete(null);
+    }
+  };
+
+  const handleConfirmDeleteWish = async () => {
+    if (!wishToDelete) return;
+    setIsDeletingWish(true);
+    try {
+      await onDeleteWish(wishToDelete.id);
+      haptic.impact();
+      setWishToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete wish:', err);
+    } finally {
+      setIsDeletingWish(false);
     }
   };
 
@@ -495,7 +530,7 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
 
                             {/* Delete Creation Button */}
                             <button
-                              onClick={() => onDeleteWish(w.id)}
+                              onClick={() => setWishToDelete(w)}
                               className="p-2 text-white/70 hover:text-rose-300 rounded-xl bg-white/[0.08] hover:bg-rose-500/20 border border-white/[0.12] transition-colors cursor-pointer"
                               title="Delete wish"
                             >
@@ -749,7 +784,7 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onDeleteWish(d.id)}
+                    onClick={() => setWishToDelete(d)}
                     className="p-2 text-white/70 hover:text-rose-300 rounded-xl bg-white/[0.08] hover:bg-rose-500/20 border border-white/[0.12] transition-colors cursor-pointer"
                     title="Delete draft"
                   >
@@ -958,10 +993,10 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <VelvetButton size="sm" variant="ghost" type="button" onClick={() => setShowNewFolderModal(false)}>
+                <VelvetButton size="sm" variant="ghost" type="button" disabled={isCreatingFolder} onClick={() => setShowNewFolderModal(false)}>
                   Cancel
                 </VelvetButton>
-                <VelvetButton size="sm" variant="primary" type="submit">
+                <VelvetButton size="sm" variant="primary" type="submit" isLoading={isCreatingFolder}>
                   Save Folder
                 </VelvetButton>
               </div>
@@ -973,7 +1008,7 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
       {/* FOLDER DELETE CONFIRMATION MODAL */}
       {folderToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-md">
-          <div className="bg-surface border border-rose-500/30 rounded-3xl p-6 max-w-sm w-full shadow-glass-card space-y-4">
+          <div className="bg-surface border border-rose-500/30 rounded-3xl p-6 max-w-sm w-full shadow-glass-card space-y-4 animate-scaleIn">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 mx-auto">
               <Trash2 size={24} />
             </div>
@@ -984,14 +1019,49 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
               </p>
             </div>
             <div className="flex justify-center gap-3 pt-2">
-              <VelvetButton size="sm" variant="ghost" type="button" onClick={() => setFolderToDelete(null)}>
+              <VelvetButton size="sm" variant="ghost" type="button" disabled={isDeletingFolder} onClick={() => setFolderToDelete(null)}>
                 Cancel
               </VelvetButton>
               <button
                 onClick={handleConfirmDeleteFolder}
-                className="px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-glow-sm cursor-pointer transition-colors"
+                disabled={isDeletingFolder}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-glow-sm cursor-pointer transition-colors disabled:opacity-50"
               >
-                Delete Folder
+                {isDeletingFolder ? <Loader2 size={13} className="animate-spin" /> : null}
+                <span>{isDeletingFolder ? 'Deleting...' : 'Delete Folder'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WISH DELETE CONFIRMATION MODAL */}
+      {wishToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-md">
+          <div className="bg-surface border border-rose-500/30 rounded-3xl p-6 max-w-sm w-full shadow-glass-card space-y-4 animate-scaleIn">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 mx-auto">
+              <Trash2 size={24} />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-lg font-bold text-white">Delete Birthday Wish?</h3>
+              <p className="text-xs text-text-2">
+                Are you sure you want to permanently delete the cinematic wish directed for <strong className="text-amber-300">{wishToDelete.recipient_name || 'Recipient'}</strong>?
+              </p>
+              <p className="text-[11px] text-text-3 font-mono">
+                The sealed web link and saved reactions for this wish will be erased.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-2">
+              <VelvetButton size="sm" variant="ghost" type="button" disabled={isDeletingWish} onClick={() => setWishToDelete(null)}>
+                Keep Wish
+              </VelvetButton>
+              <button
+                onClick={handleConfirmDeleteWish}
+                disabled={isDeletingWish}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs shadow-[0_0_20px_rgba(244,63,94,0.35)] cursor-pointer transition-all disabled:opacity-50"
+              >
+                {isDeletingWish ? <Loader2 size={13} className="animate-spin" /> : null}
+                <span>{isDeletingWish ? 'Deleting Wish...' : 'Delete Wish'}</span>
               </button>
             </div>
           </div>

@@ -267,6 +267,16 @@ export function App() {
     loadInitialData();
   };
 
+  const handleBulkDeleteContacts = async (ids: string[]) => {
+    await api.bulkDeleteContacts(ids);
+    loadInitialData();
+  };
+
+  const handleDeleteAllContacts = async () => {
+    await api.deleteAllContacts();
+    loadInitialData();
+  };
+
   const handleDeleteWish = async (id: string) => {
     await api.deleteWish(id);
     loadInitialData();
@@ -455,6 +465,8 @@ export function App() {
               onImportCsv={() => setShowCsvImport(true)}
               onCreateWishForContact={handleCreateWishForContact}
               onDeleteContact={handleDeleteContact}
+              onBulkDeleteContacts={handleBulkDeleteContacts}
+              onDeleteAllContacts={handleDeleteAllContacts}
               onEditContact={(c) => {
                 setEditContact(c);
                 setShowAddContact(true);

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Mic, Video, ArrowRight, Check, RefreshCw, Play, Pause, Trash2, Smile, AlertCircle } from 'lucide-react';
+import { Mic, Video, ArrowRight, Check, RefreshCw, Play, Pause, Trash2, Smile, AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '../../services/api.js';
 
 interface ReactionScreenProps {
@@ -809,9 +809,16 @@ export const ReactionScreen: React.FC<ReactionScreenProps> = ({
                 <button
                   onClick={() => handleSubmit('video')}
                   disabled={isSending}
-                  className="flex-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] font-body font-extrabold text-xs shadow-[0_0_20px_rgba(200,169,110,0.4)] hover:brightness-105 active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
+                  className="flex-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] font-body font-extrabold text-xs shadow-[0_0_20px_rgba(200,169,110,0.4)] hover:brightness-105 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                 >
-                  {isSending ? 'Sending...' : '✓ Send Video'}
+                  {isSending ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin text-void" />
+                      <span>Sending Video...</span>
+                    </>
+                  ) : (
+                    <span>✓ Send Video</span>
+                  )}
                 </button>
               </div>
             )}

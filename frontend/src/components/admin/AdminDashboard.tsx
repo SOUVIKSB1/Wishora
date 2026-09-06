@@ -400,7 +400,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16">
+    <div className="space-y-5 sm:space-y-8 animate-fadeIn max-w-6xl mx-auto pb-20 px-0.5 sm:px-0">
       {/* Toast Alert */}
       {statusMessage && (
         <div className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl shadow-2xl border flex items-center gap-3 animate-slideUp text-sm font-medium ${
@@ -414,117 +414,120 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       )}
 
       {/* ─── ADMIN HEADER WITH LIVE METRICS & LOGOUT ─── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-[#181124] via-[#100c1a] to-[#1a1429] border border-amber-400/30 p-6 sm:p-8 overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.15)]">
+      <div className="relative rounded-3xl bg-gradient-to-br from-[#181124] via-[#100c1a] to-[#1a1429] border border-amber-400/30 p-4 sm:p-8 overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.15)]">
         <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" opacity={0.7} />
         <AuraHalfCircle position="bottom-left" variant="rose-gold" size="md" opacity={0.5} />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[11px] font-mono font-black uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                 <ShieldCheck size={14} className="text-amber-400" />
                 CONCEALED MASTER ADMIN CONTROL
               </span>
-              <span className="text-xs font-mono text-text-3">
+              <span className="text-[11px] sm:text-xs font-mono text-text-3">
                 Logged in as <strong className="text-amber-300">{currentUser?.email}</strong>
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight">
               Wishora <span className="gold-gradient-text">Administration Suite</span>
             </h1>
-            <p className="text-xs sm:text-sm text-text-2 max-w-xl">
+            <p className="text-xs sm:text-sm text-text-2 max-w-xl leading-relaxed">
               Strictly restricted admin operations. Direct audio file uploads, text template editors, bulk bulletins, and lifetime multi-tenant controls.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full md:w-auto justify-start md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/[0.08]">
             <button
               onClick={loadAllData}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.15] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.15] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 active:scale-95"
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
               <span>Refresh</span>
             </button>
             <button
               onClick={() => { setTargetUser(null); setShowSendNotifModal(true); }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black shadow-[0_0_25px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-void text-xs font-black shadow-[0_0_25px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
-              <Send size={14} />
+              <Send size={13} />
               <span>Broadcast Alert</span>
             </button>
             {onLogout && (
               <button
                 onClick={onLogout}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all cursor-pointer active:scale-95 ml-auto sm:ml-0"
                 title="Log Out Administrator Session"
               >
-                <LogOut size={14} />
-                <span className="hidden sm:inline">Logout</span>
+                <LogOut size={13} />
+                <span>Logout</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Live System Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6 pt-6 border-t border-white/[0.1]">
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5 mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-white/[0.1]">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+            <span className="text-[9px] sm:text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <Users size={12} className="text-sky-400" />
               TOTAL USERS
             </span>
-            <span className="text-2xl font-display font-black text-white mt-1">{stats?.total_users ?? '...'}</span>
+            <span className="text-xl sm:text-2xl font-display font-black text-white mt-1">{stats?.total_users ?? '...'}</span>
           </div>
 
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+            <span className="text-[9px] sm:text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <Sparkles size={12} className="text-amber-400" />
               WISHES CREATED
             </span>
-            <span className="text-2xl font-display font-black text-amber-300 mt-1">{stats?.total_wishes ?? '...'}</span>
+            <span className="text-xl sm:text-2xl font-display font-black text-amber-300 mt-1">{stats?.total_wishes ?? '...'}</span>
           </div>
 
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+            <span className="text-[9px] sm:text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <Music size={12} className="text-emerald-400" />
               AUDIO TRACKS
             </span>
-            <span className="text-2xl font-display font-black text-emerald-300 mt-1">{stats?.total_tracks ?? '...'}</span>
+            <span className="text-xl sm:text-2xl font-display font-black text-emerald-300 mt-1">{stats?.total_tracks ?? '...'}</span>
           </div>
 
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+            <span className="text-[9px] sm:text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <FileText size={12} className="text-pink-400" />
               TEXT TEMPLATES
             </span>
-            <span className="text-2xl font-display font-black text-pink-300 mt-1">{stats?.total_templates ?? '...'}</span>
+            <span className="text-xl sm:text-2xl font-display font-black text-pink-300 mt-1">{stats?.total_templates ?? '...'}</span>
           </div>
 
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between col-span-2 sm:col-span-1">
+            <span className="text-[9px] sm:text-[10px] font-mono text-text-3 uppercase font-bold flex items-center gap-1">
               <Bell size={12} className="text-rose-400" />
               NOTIFICATIONS
             </span>
-            <span className="text-2xl font-display font-black text-rose-300 mt-1">{stats?.total_notifications ?? '...'}</span>
+            <span className="text-xl sm:text-2xl font-display font-black text-rose-300 mt-1">{stats?.total_notifications ?? '...'}</span>
           </div>
         </div>
       </div>
 
-      {/* ─── ADMIN TAB SELECTOR ─── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/[0.08]">
+      {/* ─── ADMIN TAB SELECTOR (Mobile Touch-Smooth) ─── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/[0.08] no-scrollbar">
         {[
-          { id: 'users', label: 'User Directory & Moderation', icon: Users, count: users.length },
-          { id: 'notifications', label: 'Broadcasts & Direct Messages', icon: Bell, count: notifications.length },
-          { id: 'music', label: 'Song Upload & Music Controls', icon: Music, count: musicTracks.length },
-          { id: 'templates', label: 'Text Wish Templates', icon: FileText, count: templates.length }
+          { id: 'users', label: 'User Directory', icon: Users, count: users.length },
+          { id: 'notifications', label: 'Broadcasts & DMs', icon: Bell, count: notifications.length },
+          { id: 'music', label: 'Song Upload & Library', icon: Music, count: musicTracks.length },
+          { id: 'templates', label: 'Wish Templates', icon: FileText, count: templates.length }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              onClick={() => {
+                haptic.light();
+                setActiveTab(tab.id as AdminTab);
+              }}
+              className={`inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                 isActive
                   ? 'bg-amber-400/15 border border-amber-400/40 text-amber-300 shadow-[0_0_15px_rgba(212,175,55,0.2)]'
                   : 'bg-white/[0.04] border border-white/[0.08] text-text-2 hover:text-white hover:bg-white/[0.08]'
@@ -532,7 +535,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
             >
               <Icon size={14} />
               <span>{tab.label}</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${isActive ? 'bg-amber-400/30 text-amber-200' : 'bg-white/[0.1] text-text-3'}`}>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${isActive ? 'bg-amber-400/30 text-amber-200 font-bold' : 'bg-white/[0.1] text-text-3'}`}>
                 {tab.count}
               </span>
             </button>
@@ -545,7 +548,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       ══════════════════════════════════════════════════════════════════ */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3 p-4 bg-surface-elevated/70 border border-white/[0.1] rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 bg-surface-elevated/70 border border-white/[0.1] rounded-2xl">
             <div className="relative w-full sm:w-96">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-3" />
               <input
@@ -553,11 +556,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 placeholder="Search user by name, email or ID..."
                 value={userSearch}
                 onChange={e => setUserSearch(e.target.value)}
-                className="w-full bg-void border border-white/[0.1] rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400 transition-colors"
+                className="w-full bg-void border border-white/[0.1] rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400 transition-colors font-medium"
               />
             </div>
-            <div className="text-xs font-mono text-text-3">
-              Total registered: <strong className="text-white">{filteredUsers.length}</strong>
+            <div className="text-xs font-mono text-text-3 text-right sm:text-left">
+              Total registered: <strong className="text-white font-bold">{filteredUsers.length}</strong>
             </div>
           </div>
 

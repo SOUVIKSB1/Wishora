@@ -120,6 +120,10 @@ export const api = {
   createContact: (data: any) => fetchApi<{ contact: any }>('/contacts', { method: 'POST', body: JSON.stringify(data) }),
   updateContact: (id: string, data: any) => fetchApi<{ contact: any }>(`/contacts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteContact: (id: string) => fetchApi<{ success: boolean; id: string }>(`/contacts/${id}`, { method: 'DELETE' }),
+  bulkDeleteContacts: (ids: string[]) => 
+    fetchApi<{ success: boolean; deleted: number; ids: string[] }>('/contacts/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
+  deleteAllContacts: () => 
+    fetchApi<{ success: boolean; message: string }>('/contacts/all', { method: 'DELETE' }),
   importContacts: (data: { rows?: any[]; csvContent?: string; conflictStrategy?: string }) => 
     fetchApi<{ success: boolean; imported: number; updated: number; skipped: number }>('/contacts/import', { method: 'POST', body: JSON.stringify(data) }),
   previewContactsCsv: (csvContent: string) =>

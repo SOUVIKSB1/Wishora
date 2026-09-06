@@ -157,9 +157,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <Sparkles size={13} className="text-amber-400 animate-spin-slow" />
                 <span>{getGreeting()}, {firstName} ✨</span>
               </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-[11px] font-mono font-bold text-amber-300">
-                <span>{getDirectorId(user)}</span>
-              </div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight leading-tight">
