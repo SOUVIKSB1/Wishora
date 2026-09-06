@@ -1,24 +1,25 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
+import { extractUserId } from './auth.routes.js';
 
 export async function foldersRoutes(fastify: FastifyInstance) {
-  const defaultUserId = 'usr_default_master';
-
   // List folders with wish counts
-  fastify.get('/folders', async () => {
+  fastify.get('/folders', async (req) => {
+    const userId = extractUserId(req) || 'usr_default_master';
     const folders = db.prepare(`
       SELECT f.*, (SELECT COUNT(*) FROM wishes WHERE folder_id = f.id) as wish_count
       FROM folders f
       WHERE f.user_id = ?
       ORDER BY f.sort_order ASC, f.created_at ASC
-    `).all(defaultUserId);
+    `).all(userId);
 
     return { folders };
   });
 
   // Create folder
   fastify.post('/folders', async (req, reply) => {
+    const userId = extractUserId(req) || 'usr_default_master';
     const body = req.body as { name: string; color?: string };
     if (!body.name) {
       return reply.code(400).send({ error: 'Folder name is required' });
@@ -27,7 +28,7 @@ export async function foldersRoutes(fastify: FastifyInstance) {
     const id = `fld_${nanoid(8)}`;
     db.prepare('INSERT INTO folders (id, user_id, name, color) VALUES (?, ?, ?, ?)').run(
       id,
-      defaultUserId,
+      userId,
       body.name.trim(),
       body.color || '#C8A96E'
     );

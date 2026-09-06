@@ -1,9 +1,10 @@
 import { db } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
+import { extractUserId } from './auth.routes.js';
 export async function wishesRoutes(fastify) {
-    const defaultUserId = 'usr_default_master';
     // List all wishes
     fastify.get('/wishes', async (req) => {
+        const userId = extractUserId(req) || 'usr_default_master';
         const query = req.query;
         let sql = `
       SELECT w.*, 
@@ -26,7 +27,7 @@ export async function wishesRoutes(fastify) {
       LEFT JOIN music_tracks m ON w.music_id = m.id
       WHERE w.user_id = ?
     `;
-        const params = [defaultUserId];
+        const params = [userId];
         if (query.folder_id) {
             sql += ' AND w.folder_id = ?';
             params.push(query.folder_id);
@@ -59,6 +60,7 @@ export async function wishesRoutes(fastify) {
     });
     // Create wish
     fastify.post('/wishes', async (req, reply) => {
+        const userId = extractUserId(req) || 'usr_default_master';
         const body = req.body;
         const id = `wsh_${nanoid(10)}`;
         const slug = body.slug || nanoid(10).toLowerCase();
@@ -67,7 +69,7 @@ export async function wishesRoutes(fastify) {
         // Auto-save into contacts table if direct build without existing contact
         if (!contactId && recipientName && recipientName !== 'Friend') {
             try {
-                const existing = db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(defaultUserId, recipientName);
+                const existing = db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(userId, recipientName);
                 if (existing) {
                     contactId = existing.id;
                 }
@@ -80,13 +82,19 @@ export async function wishesRoutes(fastify) {
                     db.prepare(`
             INSERT INTO contacts (id, user_id, name, dob_day, dob_month, dob_year, relationship, gender, note)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(newContactId, defaultUserId, recipientName, dobDay, dobMonth, dobYear, body.relationship || 'Friend', body.recipient_gender || 'unspecified', 'Auto-saved from direct wish creation');
+          `).run(newContactId, userId, recipientName, dobDay, dobMonth, dobYear, body.relationship || 'Friend', body.recipient_gender || 'unspecified', 'Auto-saved from direct wish creation');
                     contactId = newContactId;
                 }
             }
             catch (err) {
                 console.warn('Auto-save contact skipped or failed:', err);
             }
+        }
+        // Ensure default folder exists for user if folder_id is not provided
+        let folderId = body.folder_id;
+        if (!folderId) {
+            const defaultFolder = db.prepare('SELECT id FROM folders WHERE user_id = ? LIMIT 1').get(userId);
+            folderId = defaultFolder ? defaultFolder.id : null;
         }
         const stmt = db.prepare(`
       INSERT INTO wishes (
@@ -95,7 +103,7 @@ export async function wishesRoutes(fastify) {
         music_trim_start, music_trim_end, status, scheduled_for
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-        stmt.run(id, defaultUserId, body.folder_id || 'fld_1', contactId, slug, recipientName, body.recipient_dob || '2000-01-01', body.recipient_gender || 'unspecified', body.wish_text || '', body.wish_language || 'en', body.theme || 'auto', body.music_id || 'trk_1', body.custom_music_url || null, body.music_trim_start || 0, body.music_trim_end || 30, body.status || 'draft', body.scheduled_for || null);
+        stmt.run(id, userId, folderId, contactId, slug, recipientName, body.recipient_dob || '2000-01-01', body.recipient_gender || 'unspecified', body.wish_text || '', body.wish_language || 'en', body.theme || 'auto', body.music_id || 'trk_1', body.custom_music_url || null, body.music_trim_start || 0, body.music_trim_end || 30, body.status || 'draft', body.scheduled_for || null);
         // If photos are provided
         if (Array.isArray(body.photos)) {
             const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');

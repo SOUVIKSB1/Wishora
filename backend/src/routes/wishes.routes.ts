@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
+import { extractUserId } from './auth.routes.js';
 
 export async function wishesRoutes(fastify: FastifyInstance) {
-  const defaultUserId = 'usr_default_master';
-
   // List all wishes
   fastify.get('/wishes', async (req) => {
+    const userId = extractUserId(req) || 'usr_default_master';
     const query = req.query as { folder_id?: string; status?: string };
     let sql = `
       SELECT w.*, 
@@ -29,7 +29,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       LEFT JOIN music_tracks m ON w.music_id = m.id
       WHERE w.user_id = ?
     `;
-    const params: any[] = [defaultUserId];
+    const params: any[] = [userId];
 
     if (query.folder_id) {
       sql += ' AND w.folder_id = ?';
@@ -70,6 +70,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Create wish
   fastify.post('/wishes', async (req, reply) => {
+    const userId = extractUserId(req) || 'usr_default_master';
     const body = req.body as any;
     const id = `wsh_${nanoid(10)}`;
     const slug = body.slug || nanoid(10).toLowerCase();
@@ -80,7 +81,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     // Auto-save into contacts table if direct build without existing contact
     if (!contactId && recipientName && recipientName !== 'Friend') {
       try {
-        const existing = db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(defaultUserId, recipientName) as any;
+        const existing = db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(userId, recipientName) as any;
         if (existing) {
           contactId = existing.id;
         } else {
@@ -95,7 +96,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).run(
             newContactId,
-            defaultUserId,
+            userId,
             recipientName,
             dobDay,
             dobMonth,
@@ -111,6 +112,13 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       }
     }
 
+    // Ensure default folder exists for user if folder_id is not provided
+    let folderId = body.folder_id;
+    if (!folderId) {
+      const defaultFolder = db.prepare('SELECT id FROM folders WHERE user_id = ? LIMIT 1').get(userId) as any;
+      folderId = defaultFolder ? defaultFolder.id : null;
+    }
+
     const stmt = db.prepare(`
       INSERT INTO wishes (
         id, user_id, folder_id, contact_id, slug, recipient_name, recipient_dob,
@@ -121,8 +129,8 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     stmt.run(
       id,
-      defaultUserId,
-      body.folder_id || 'fld_1',
+      userId,
+      folderId,
       contactId,
       slug,
       recipientName,

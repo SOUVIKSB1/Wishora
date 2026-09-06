@@ -2,11 +2,12 @@ import { FastifyInstance } from 'fastify';
 import { db } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
 import { parseContactsCsv, importContacts } from '../services/csv.service.js';
+import { extractUserId } from './auth.routes.js';
 
 export async function contactsRoutes(fastify: FastifyInstance) {
   // List all contacts with upcoming birthday calculation
   fastify.get('/contacts', async (req) => {
-    const userId = 'usr_default_master'; // Default demo user
+    const userId = extractUserId(req) || 'usr_default_master';
     const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId) as any[];
 
     const today = new Date();
@@ -52,7 +53,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
 
   // Create single contact
   fastify.post('/contacts', async (req, reply) => {
-    const userId = 'usr_default_master';
+    const userId = extractUserId(req) || 'usr_default_master';
     const body = req.body as any;
 
     if (!body.name || !body.dob_month) {
@@ -149,7 +150,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
 
   // Import CSV
   fastify.post('/contacts/import', async (req) => {
-    const userId = 'usr_default_master';
+    const userId = extractUserId(req) || 'usr_default_master';
     const body = req.body as { csvContent?: string; rows?: any[]; conflictStrategy?: 'update' | 'skip' | 'duplicate' };
 
     let rowsToImport = body.rows;

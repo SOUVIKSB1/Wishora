@@ -13,12 +13,31 @@ export function warmUpBackend() {
 // Trigger warmup immediately when module loads
 warmUpBackend();
 
+const TOKEN_KEY = 'wishora_auth_token';
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string> || {}),
   };
   if (options?.body || options?.method === 'POST' || options?.method === 'PUT') {
     headers['Content-Type'] = 'application/json';
+  }
+
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const url = API_BASE ? `${API_BASE}/api/v1${endpoint}` : `/api/v1${endpoint}`;
@@ -39,8 +58,26 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 
 export const api = {
   // Auth
+  register: async (data: { email: string; password?: string; display_name: string; user_dob?: string; gender?: string; avatar_url?: string }) => {
+    const res = await fetchApi<{ user: any; token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+    if (res.token) setAuthToken(res.token);
+    return res;
+  },
+  login: async (email: string, password: string) => {
+    const res = await fetchApi<{ user: any; token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    if (res.token) setAuthToken(res.token);
+    return res;
+  },
+  googleLogin: async (data: { email: string; google_id?: string; display_name?: string; avatar_url?: string; user_dob?: string; gender?: string }) => {
+    const res = await fetchApi<{ user: any; token: string }>('/auth/google', { method: 'POST', body: JSON.stringify(data) });
+    if (res.token) setAuthToken(res.token);
+    return res;
+  },
+  logout: () => {
+    clearAuthToken();
+  },
   getMe: () => fetchApi<{ user: any; stats: any }>('/auth/me'),
-  updateProfile: (data: any) => fetchApi<{ user: any }>('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
+  updateProfile: (data: any) => fetchApi<{ user: any; stats: any }>('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
 
   // Contacts
   getContacts: () => fetchApi<{ contacts: any[]; total: number }>('/contacts'),

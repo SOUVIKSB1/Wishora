@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Crown, Sparkles, Shield, User, Globe, Bell, Check, Cake, Star, Award, Film, KeyRound, Camera, Upload, RefreshCw, Image as ImageIcon } from 'lucide-react';
+import { Crown, Sparkles, Shield, User, Globe, Bell, Check, Cake, Star, Award, Film, KeyRound, Camera, Upload, RefreshCw, Image as ImageIcon, LogOut } from 'lucide-react';
 import { VelvetButton } from './ui/VelvetButton.js';
 import { GlowBadge } from './ui/GlowBadge.js';
 import { WheelDatePicker } from './ui/WheelDatePicker.js';
@@ -10,9 +10,10 @@ interface ProfileViewProps {
   user: any;
   stats: any;
   onUpdate: () => void;
+  onLogout?: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate, onLogout }) => {
   const [displayName, setDisplayName] = useState(user?.display_name || 'Souvik Sinhababu');
   const [userDob, setUserDob] = useState(user?.user_dob || '1998-05-20');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
@@ -251,22 +252,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate 
         </div>
       </div>
 
-      {/* Save Action */}
-      <div className="flex justify-end gap-3 items-center pt-2">
-        {saveSuccess && (
-          <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5 animate-pulse">
-            <Check size={16} /> Changes & Photo Saved Successfully!
-          </span>
+      {/* Save & Sign Out Action */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all cursor-pointer"
+          >
+            <LogOut size={14} />
+            <span>Sign Out Session</span>
+          </button>
         )}
-        <VelvetButton
-          variant="glow"
-          size="md"
-          isLoading={isSaving}
-          onClick={handleSave}
-          className="shadow-[0_0_25px_rgba(212,175,55,0.35)]"
-        >
-          Save Profile
-        </VelvetButton>
+
+        <div className="flex items-center justify-end gap-3">
+          {saveSuccess && (
+            <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5 animate-pulse">
+              <Check size={16} /> Changes Saved!
+            </span>
+          )}
+          <VelvetButton
+            variant="glow"
+            size="md"
+            isLoading={isSaving}
+            onClick={handleSave}
+            className="shadow-[0_0_25px_rgba(212,175,55,0.35)]"
+          >
+            Save Profile
+          </VelvetButton>
+        </div>
       </div>
     </div>
   );

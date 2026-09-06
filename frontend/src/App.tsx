@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Home, BookOpen, Users, User, Plus, Sparkles } from 'lucide-react';
-import { api } from './services/api.js';
+import { Home, BookOpen, Users, User, Plus, Sparkles, LogOut } from 'lucide-react';
+import { api, getAuthToken, clearAuthToken } from './services/api.js';
+import { logOutOfFirebase } from './services/firebase.js';
 import { Contact, Folder } from './types/contact.js';
 import { Wish, WishExperienceData } from './types/wish.js';
 import { HomeView } from './components/HomeView.js';
@@ -11,6 +12,7 @@ import { CreateWishModal } from './components/wizard/CreateWishModal.js';
 import { AddContactModal } from './components/contacts/AddContactModal.js';
 import { CsvImportModal } from './components/contacts/CsvImportModal.js';
 import { OnboardingModal } from './components/OnboardingModal.js';
+import { AuthModal } from './components/auth/AuthModal.js';
 import { WishExperienceView } from './components/experience/WishExperienceView.js';
 import { ParticleField } from './components/canvas/ParticleField.js';
 
@@ -21,8 +23,11 @@ export function App() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!getAuthToken());
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Modals state
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [createWizardInitial, setCreateWizardInitial] = useState<any>(null);
   const [showAddContact, setShowAddContact] = useState(false);
@@ -41,14 +46,18 @@ export function App() {
     if (match && match[1]) {
       const slug = match[1];
       loadPublicExperience(slug);
+      setIsCheckingAuth(false);
+      return;
     }
 
-    // Check first-time onboarding
-    if (!localStorage.getItem('wishora_onboarded')) {
-      setShowOnboarding(true);
+    // Check auth status
+    const token = getAuthToken();
+    if (token) {
+      loadInitialData();
+    } else {
+      setIsCheckingAuth(false);
+      setShowAuthModal(true);
     }
-
-    loadInitialData();
   }, []);
 
   const loadInitialData = async () => {
@@ -63,13 +72,39 @@ export function App() {
       if (authRes.user) {
         setUser(authRes.user);
         setStats(authRes.stats);
+        setIsAuthenticated(true);
+        setShowAuthModal(false);
+      } else {
+        setIsAuthenticated(false);
+        setShowAuthModal(true);
       }
       setContacts(contactsRes.contacts || []);
       setWishes(wishesRes.wishes || []);
       setFolders(foldersRes.folders || []);
     } catch (err) {
       console.error('Failed to load initial data:', err);
+    } finally {
+      setIsCheckingAuth(false);
     }
+  };
+
+  const handleAuthSuccess = (authenticatedUser: any) => {
+    setUser(authenticatedUser);
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+    loadInitialData();
+  };
+
+  const handleLogout = async () => {
+    await logOutOfFirebase();
+    api.logout();
+    setUser(null);
+    setStats(null);
+    setContacts([]);
+    setWishes([]);
+    setFolders([]);
+    setIsAuthenticated(false);
+    setShowAuthModal(true);
   };
 
   const loadPublicExperience = async (slug: string) => {
@@ -238,6 +273,7 @@ export function App() {
               user={user}
               stats={stats}
               onUpdate={loadInitialData}
+              onLogout={handleLogout}
             />
           )}
         </main>
@@ -268,6 +304,13 @@ export function App() {
         </div>
       </nav>
 
+      {/* Auth Modal (Presented if not logged in or requested) */}
+      {(!isAuthenticated || showAuthModal) && (
+        <AuthModal
+          onSuccess={handleAuthSuccess}
+        />
+      )}
+
       {/* Modals */}
       {showCreateWizard && (
         <CreateWishModal
@@ -295,7 +338,7 @@ export function App() {
         />
       )}
 
-      {showOnboarding && (
+      {showOnboarding && isAuthenticated && (
         <OnboardingModal
           onComplete={() => setShowOnboarding(false)}
         />
@@ -305,3 +348,4 @@ export function App() {
 }
 
 export default App;
+

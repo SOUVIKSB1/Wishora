@@ -1,10 +1,11 @@
 import { db } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
 import { parseContactsCsv, importContacts } from '../services/csv.service.js';
+import { extractUserId } from './auth.routes.js';
 export async function contactsRoutes(fastify) {
     // List all contacts with upcoming birthday calculation
     fastify.get('/contacts', async (req) => {
-        const userId = 'usr_default_master'; // Default demo user
+        const userId = extractUserId(req) || 'usr_default_master';
         const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId);
         const today = new Date();
         const currentYear = today.getFullYear();
@@ -43,7 +44,7 @@ export async function contactsRoutes(fastify) {
     });
     // Create single contact
     fastify.post('/contacts', async (req, reply) => {
-        const userId = 'usr_default_master';
+        const userId = extractUserId(req) || 'usr_default_master';
         const body = req.body;
         if (!body.name || !body.dob_month) {
             return reply.code(400).send({ error: 'Name and Birth Month are required' });
@@ -98,7 +99,7 @@ export async function contactsRoutes(fastify) {
     });
     // Import CSV
     fastify.post('/contacts/import', async (req) => {
-        const userId = 'usr_default_master';
+        const userId = extractUserId(req) || 'usr_default_master';
         const body = req.body;
         let rowsToImport = body.rows;
         if (!rowsToImport && body.csvContent) {
