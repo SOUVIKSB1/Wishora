@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "tsx src/server.ts"
+    "postinstall": "npm rebuild better-sqlite3 || true",
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

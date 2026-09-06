@@ -1,4 +1,17 @@
-const API_BASE = '/api/v1';
+const RAW_API_BASE = ((import.meta as any).env?.VITE_API_URL as string) || '';
+const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+
+// Instant Warm-up / Wake-up Render Backend silently on page load
+let isWakingUp = false;
+export function warmUpBackend() {
+  if (isWakingUp || !API_BASE) return;
+  isWakingUp = true;
+  // Non-blocking fire-and-forget health ping
+  fetch(`${API_BASE}/health`, { method: 'GET', keepalive: true }).catch(() => {});
+}
+
+// Trigger warmup immediately when module loads
+warmUpBackend();
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
@@ -8,7 +21,9 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const url = API_BASE ? `${API_BASE}/api/v1${endpoint}` : `/api/v1${endpoint}`;
+
+  const res = await fetch(url, {
     ...options,
     body: options?.body ? options.body : (options?.method === 'POST' || options?.method === 'PUT' ? JSON.stringify({}) : undefined),
     headers,
