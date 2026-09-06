@@ -367,6 +367,6 @@ export function compressAndReadFileAsDataUrl(file: File, maxDimension: number = 
  * Helper to convert an uploaded image File into a base64 Data URL with automatic smart compression.
  */
 export function readFileAsDataUrl(file: File): Promise<string> {
-  return compressAndReadFileAsDataUrl(file, 1200, 0.85);
+  return compressAndReadFileAsDataUrl(file, 800, 0.72);
 }
 

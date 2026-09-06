@@ -39,7 +39,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({ photos, onChange }) => {
     setIsProcessing(true);
     try {
       const compressedUrls = await Promise.all(
-        filesToProcess.map(file => compressAndReadFileAsDataUrl(file, 1200, 0.85))
+        filesToProcess.map(file => compressAndReadFileAsDataUrl(file, 800, 0.72))
       );
 
       const newPhotos: PhotoItem[] = compressedUrls.map((url, idx) => ({

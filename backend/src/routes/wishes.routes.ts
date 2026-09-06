@@ -119,48 +119,52 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       folderId = defaultFolder ? defaultFolder.id : null;
     }
 
-    const stmt = db.prepare(`
-      INSERT INTO wishes (
-        id, user_id, folder_id, contact_id, slug, recipient_name, recipient_dob,
-        recipient_gender, wish_text, wish_language, theme, music_id, custom_music_url,
-        music_trim_start, music_trim_end, status, scheduled_for
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+    const insertWishTx = db.transaction(() => {
+      const stmt = db.prepare(`
+        INSERT INTO wishes (
+          id, user_id, folder_id, contact_id, slug, recipient_name, recipient_dob,
+          recipient_gender, wish_text, wish_language, theme, music_id, custom_music_url,
+          music_trim_start, music_trim_end, status, scheduled_for
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
 
-    stmt.run(
-      id,
-      userId,
-      folderId,
-      contactId,
-      slug,
-      recipientName,
-      body.recipient_dob || '2000-01-01',
-      body.recipient_gender || 'unspecified',
-      body.wish_text || '',
-      body.wish_language || 'en',
-      body.theme || 'auto',
-      body.music_id || 'trk_1',
-      body.custom_music_url || null,
-      body.music_trim_start || 0,
-      body.music_trim_end || 30,
-      body.status || 'draft',
-      body.scheduled_for || null
-    );
+      stmt.run(
+        id,
+        userId,
+        folderId,
+        contactId,
+        slug,
+        recipientName,
+        body.recipient_dob || '2000-01-01',
+        body.recipient_gender || 'unspecified',
+        body.wish_text || '',
+        body.wish_language || 'en',
+        body.theme || 'auto',
+        body.music_id || 'trk_1',
+        body.custom_music_url || null,
+        body.music_trim_start || 0,
+        body.music_trim_end || 30,
+        body.status || 'draft',
+        body.scheduled_for || null
+      );
 
-    // If photos are provided
-    if (Array.isArray(body.photos)) {
-      const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
-      body.photos.forEach((p: any, idx: number) => {
-        photoStmt.run(
-          `pht_${nanoid(8)}`,
-          id,
-          p.storage_url || p.url,
-          p.caption || null,
-          idx,
-          idx === 0 ? 1 : 0
-        );
-      });
-    }
+      // If photos are provided
+      if (Array.isArray(body.photos) && body.photos.length > 0) {
+        const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
+        body.photos.forEach((p: any, idx: number) => {
+          photoStmt.run(
+            `pht_${nanoid(8)}`,
+            id,
+            typeof p === 'string' ? p : p.storage_url || p.url,
+            typeof p === 'object' ? p.caption || null : null,
+            idx,
+            idx === 0 ? 1 : 0
+          );
+        });
+      }
+    });
+
+    insertWishTx();
 
     const created = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
     const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
@@ -173,57 +177,61 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     const { id } = req.params as { id: string };
     const body = req.body as any;
 
-    const stmt = db.prepare(`
-      UPDATE wishes SET
-        folder_id = COALESCE(?, folder_id),
-        recipient_name = COALESCE(?, recipient_name),
-        recipient_dob = COALESCE(?, recipient_dob),
-        recipient_gender = COALESCE(?, recipient_gender),
-        wish_text = COALESCE(?, wish_text),
-        wish_language = COALESCE(?, wish_language),
-        theme = COALESCE(?, theme),
-        music_id = COALESCE(?, music_id),
-        custom_music_url = ?,
-        music_trim_start = COALESCE(?, music_trim_start),
-        music_trim_end = COALESCE(?, music_trim_end),
-        status = COALESCE(?, status),
-        scheduled_for = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
+    const updateWishTx = db.transaction(() => {
+      const stmt = db.prepare(`
+        UPDATE wishes SET
+          folder_id = COALESCE(?, folder_id),
+          recipient_name = COALESCE(?, recipient_name),
+          recipient_dob = COALESCE(?, recipient_dob),
+          recipient_gender = COALESCE(?, recipient_gender),
+          wish_text = COALESCE(?, wish_text),
+          wish_language = COALESCE(?, wish_language),
+          theme = COALESCE(?, theme),
+          music_id = COALESCE(?, music_id),
+          custom_music_url = ?,
+          music_trim_start = COALESCE(?, music_trim_start),
+          music_trim_end = COALESCE(?, music_trim_end),
+          status = COALESCE(?, status),
+          scheduled_for = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
 
-    stmt.run(
-      body.folder_id,
-      body.recipient_name,
-      body.recipient_dob,
-      body.recipient_gender,
-      body.wish_text,
-      body.wish_language,
-      body.theme,
-      body.music_id,
-      body.custom_music_url || null,
-      body.music_trim_start,
-      body.music_trim_end,
-      body.status,
-      body.scheduled_for || null,
-      id
-    );
+      stmt.run(
+        body.folder_id,
+        body.recipient_name,
+        body.recipient_dob,
+        body.recipient_gender,
+        body.wish_text,
+        body.wish_language,
+        body.theme,
+        body.music_id,
+        body.custom_music_url || null,
+        body.music_trim_start,
+        body.music_trim_end,
+        body.status,
+        body.scheduled_for || null,
+        id
+      );
 
-    // Update photos if passed
-    if (Array.isArray(body.photos)) {
-      db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
-      const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
-      body.photos.forEach((p: any, idx: number) => {
-        photoStmt.run(
-          `pht_${nanoid(8)}`,
-          id,
-          typeof p === 'string' ? p : p.storage_url || p.url,
-          typeof p === 'object' ? p.caption || null : null,
-          idx,
-          idx === 0 ? 1 : 0
-        );
-      });
-    }
+      // Update photos if passed
+      if (Array.isArray(body.photos)) {
+        db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
+        const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
+        body.photos.forEach((p: any, idx: number) => {
+          photoStmt.run(
+            `pht_${nanoid(8)}`,
+            id,
+            typeof p === 'string' ? p : p.storage_url || p.url,
+            typeof p === 'object' ? p.caption || null : null,
+            idx,
+            idx === 0 ? 1 : 0
+          );
+        });
+      }
+    });
+
+    updateWishTx();
 
     const updated = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
     const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);

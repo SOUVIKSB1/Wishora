@@ -161,15 +161,27 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const res = await api.createWish({
-        ...formData,
-        photos,
-        status: 'generated'
-      });
-      setGeneratedSlug(res.wish.slug);
+      let res: any;
+      if (initialData?.id) {
+        res = await api.updateWish(initialData.id, {
+          ...formData,
+          photos,
+          status: 'generated'
+        });
+      } else {
+        res = await api.createWish({
+          ...formData,
+          photos,
+          status: 'generated'
+        });
+      }
+      if (res?.wish?.slug) {
+        setGeneratedSlug(res.wish.slug);
+      }
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to generate wish link:', err);
+      alert(err?.message || 'Failed to generate sealed link. Please try again.');
     } finally {
       setIsGenerating(false);
     }
