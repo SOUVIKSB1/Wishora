@@ -1,18 +1,18 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, UserCredential } from 'firebase/auth';
 
-// Firebase web configuration using Vite env vars with fallback to configured project keys
+// Firebase web configuration strictly loaded from environment variables
 const firebaseConfig = {
-  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || 'AIzaSyD0i2lQvAaUmid5qb4n3xUd0uNDACI1xfo',
-  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || 'wishora-ea7db.firebaseapp.com',
-  projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || 'wishora-ea7db',
-  storageBucket: (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET || 'wishora-ea7db.firebasestorage.app',
-  messagingSenderId: (import.meta as any).env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '535942142332',
-  appId: (import.meta as any).env?.VITE_FIREBASE_APP_ID || '1:535942142332:web:b12e52c71c792a15a1ecf9',
-  measurementId: (import.meta as any).env?.VITE_FIREBASE_MEASUREMENT_ID || 'G-3BQQ5BLL9X',
+  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || '',
+  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: (import.meta as any).env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: (import.meta as any).env?.VITE_FIREBASE_APP_ID || '',
+  measurementId: (import.meta as any).env?.VITE_FIREBASE_MEASUREMENT_ID || '',
 };
 
-// Initialize Firebase App singleton safely
+// Initialize Firebase App singleton safely (only when apiKey is present)
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
