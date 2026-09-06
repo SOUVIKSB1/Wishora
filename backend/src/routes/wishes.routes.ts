@@ -5,14 +5,16 @@ import { extractUserId } from './auth.routes.js';
 
 export async function wishesRoutes(fastify: FastifyInstance) {
   // List all wishes
-  // List all wishes
-  fastify.get('/wishes', async (req) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+  fastify.get('/wishes', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const query = req.query as { folder_id?: string; status?: string };
     let sql = `
       SELECT w.*, 
-             COALESCE(c.avatar_url, (SELECT c2.avatar_url FROM contacts c2 WHERE LOWER(TRIM(c2.name)) = LOWER(TRIM(w.recipient_name)) LIMIT 1)) as contact_avatar_url,
-             COALESCE(w.recipient_gender, c.gender, (SELECT c3.gender FROM contacts c3 WHERE LOWER(TRIM(c3.name)) = LOWER(TRIM(w.recipient_name)) LIMIT 1), 'unspecified') as recipient_gender,
+             COALESCE(c.avatar_url, (SELECT c2.avatar_url FROM contacts c2 WHERE LOWER(TRIM(c2.name)) = LOWER(TRIM(w.recipient_name)) AND c2.user_id = w.user_id LIMIT 1)) as contact_avatar_url,
+             COALESCE(w.recipient_gender, c.gender, (SELECT c3.gender FROM contacts c3 WHERE LOWER(TRIM(c3.name)) = LOWER(TRIM(w.recipient_name)) AND c3.user_id = w.user_id LIMIT 1), 'unspecified') as recipient_gender,
              f.name as folder_name,
              f.color as folder_color,
              m.title as music_title,
@@ -50,14 +52,18 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Get single wish detail with version history
   fastify.get('/wishes/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
     const wish = db.prepare(`
       SELECT w.*, f.name as folder_name, m.title as music_title, m.genre as music_genre
       FROM wishes w
       LEFT JOIN folders f ON w.folder_id = f.id
       LEFT JOIN music_tracks m ON w.music_id = m.id
-      WHERE w.id = ?
-    `).get(id) as any;
+      WHERE w.id = ? AND w.user_id = ?
+    `).get(id, userId) as any;
 
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
@@ -77,7 +83,16 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Get versions of a wish
   fastify.get('/wishes/:id/versions', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
+    const wish = db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    if (!wish) {
+      return reply.code(404).send({ error: 'Wish not found' });
+    }
+
     const rawVersions = db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id) as any[];
     const versions = rawVersions.map(v => ({
       ...v,
@@ -88,7 +103,16 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Revert wish to previous version
   fastify.post('/wishes/:id/revert/:versionId', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id, versionId } = req.params as { id: string; versionId: string };
+    const wish = db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    if (!wish) {
+      return reply.code(404).send({ error: 'Wish not found' });
+    }
+
     const versionRecord = db.prepare('SELECT * FROM wish_versions WHERE id = ? AND wish_id = ?').get(versionId, id) as any;
     if (!versionRecord) {
       return reply.code(404).send({ error: 'Version record not found' });
@@ -104,7 +128,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     const revertTx = db.transaction(() => {
       // Archive current before reverting
-      const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id) as any;
+      const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
       const currentPhotos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
       if (currentWish) {
         db.prepare(`
@@ -136,7 +160,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
           status = ?,
           version = version + 1,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
+        WHERE id = ? AND user_id = ?
       `);
 
       stmt.run(
@@ -153,7 +177,8 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         oldWish.music_trim_end || 30,
         oldWish.music_volume ?? 0.8,
         oldWish.status,
-        id
+        id,
+        userId
       );
 
       // Restore photos
@@ -173,7 +198,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     revertTx();
 
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
     const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { success: true, wish: updated, photos };
@@ -181,7 +206,10 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Create wish
   fastify.post('/wishes', async (req, reply) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const body = req.body as any;
     const id = `wsh_${nanoid(10)}`;
     const slug = body.slug || nanoid(10).toLowerCase();
@@ -232,14 +260,14 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         console.warn('Auto-save contact skipped or failed:', err);
       }
     } else if (contactId) {
-      const contactExists = db.prepare('SELECT id FROM contacts WHERE id = ?').get(contactId);
+      const contactExists = db.prepare('SELECT id FROM contacts WHERE id = ? AND user_id = ?').get(contactId, userId);
       if (!contactExists) contactId = null;
     }
 
     // Ensure valid folder ID
     let folderId = body.folder_id || null;
     if (folderId) {
-      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ?').get(folderId);
+      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
       if (!folderExists) folderId = null;
     }
     if (!folderId) {
@@ -305,7 +333,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     insertWishTx();
 
-    const created = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+    const created = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
     const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { wish: created, photos };
@@ -313,10 +341,14 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Update wish with automatic version history archiving
   fastify.put('/wishes/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
     const body = req.body as any;
 
-    const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id) as any;
+    const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
     if (!currentWish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
@@ -324,7 +356,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     let folderId = body.folder_id;
     if (folderId) {
-      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ?').get(folderId);
+      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
       if (!folderExists) folderId = null;
     }
 
@@ -369,7 +401,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
           status = COALESCE(?, status),
           scheduled_for = ?,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
+        WHERE id = ? AND user_id = ?
       `);
 
       stmt.run(
@@ -388,7 +420,8 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         nextVer,
         body.status,
         body.scheduled_for || null,
-        id
+        id,
+        userId
       );
 
       // Update photos if passed
@@ -410,7 +443,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     updateWishTx();
 
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id);
+    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
     const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { wish: updated, photos };
@@ -418,14 +451,18 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
   // Generate / Publish Wish
   fastify.post('/wishes/:id/generate', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
-    const wish = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id) as any;
+    const wish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
 
-    db.prepare("UPDATE wishes SET status = 'generated', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(id);
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ?').get(id) as any;
+    db.prepare("UPDATE wishes SET status = 'generated', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?").run(id, userId);
+    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
 
     return {
       success: true,
@@ -436,9 +473,13 @@ export async function wishesRoutes(fastify: FastifyInstance) {
   });
 
   // Delete wish
-  fastify.delete('/wishes/:id', async (req) => {
+  fastify.delete('/wishes/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM wishes WHERE id = ?').run(id);
+    db.prepare('DELETE FROM wishes WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 }

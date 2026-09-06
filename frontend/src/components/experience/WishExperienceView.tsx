@@ -76,6 +76,7 @@ export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, on
   };
 
   const handleCelebrationReaction = () => {
+    stop();
     setCurrentStep('reaction');
   };
 

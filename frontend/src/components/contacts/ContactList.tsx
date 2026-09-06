@@ -3,7 +3,7 @@ import { Contact } from '../../types/contact.js';
 import { Plus, UploadCloud, Search, Sparkles, Calendar, Heart, MoreVertical, Trash2, Edit, UserCheck, Shield } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { GlowBadge } from '../ui/GlowBadge.js';
-
+import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { LUXURY_AVATAR_PRESETS, getAvatarUrl } from '../../utils/avatar.js';
 
 interface ContactListProps {
@@ -34,15 +34,15 @@ export const ContactList: React.FC<ContactListProps> = ({
   const getRelationshipColor = (rel: string) => {
     const lower = (rel || '').toLowerCase();
     if (lower.includes('partner') || lower.includes('love') || lower.includes('spouse') || lower.includes('wife') || lower.includes('husband')) {
-      return { badgeVariant: 'rose' as const, dot: 'bg-pink-400', tagBg: 'bg-pink-500/10 text-pink-300 border-pink-500/30' };
+      return { badgeVariant: 'rose' as const, dot: 'bg-pink-400', tagBg: 'bg-pink-500/10 text-pink-300 border-pink-500/30', aura: 'rose-gold' as const };
     }
     if (lower.includes('friend') || lower.includes('bestie')) {
-      return { badgeVariant: 'cyan' as const, dot: 'bg-sky-400', tagBg: 'bg-sky-500/10 text-sky-300 border-sky-500/30' };
+      return { badgeVariant: 'cyan' as const, dot: 'bg-sky-400', tagBg: 'bg-sky-500/10 text-sky-300 border-sky-500/30', aura: 'cyan-emerald' as const };
     }
     if (lower.includes('mom') || lower.includes('dad') || lower.includes('family') || lower.includes('sister') || lower.includes('brother')) {
-      return { badgeVariant: 'emerald' as const, dot: 'bg-emerald-400', tagBg: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' };
+      return { badgeVariant: 'emerald' as const, dot: 'bg-emerald-400', tagBg: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', aura: 'emerald-gold' as const };
     }
-    return { badgeVariant: 'gold' as const, dot: 'bg-amber-400', tagBg: 'bg-amber-500/10 text-amber-300 border-amber-500/30' };
+    return { badgeVariant: 'gold' as const, dot: 'bg-amber-400', tagBg: 'bg-amber-500/10 text-amber-300 border-amber-500/30', aura: 'gold-purple' as const };
   };
 
   return (
@@ -55,10 +55,10 @@ export const ContactList: React.FC<ContactListProps> = ({
               VIP ROLODEX & RADAR
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-black text-white">
+          <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
             Birthday Contacts
           </h1>
-          <p className="text-xs sm:text-sm text-text-2 mt-0.5 font-medium">
+          <p className="text-xs sm:text-sm text-text-2 mt-0.5 font-medium leading-relaxed">
             Track birthdays, get timely countdown alerts, and launch custom cinematic films in 1-click.
           </p>
         </div>
@@ -121,13 +121,15 @@ export const ContactList: React.FC<ContactListProps> = ({
             return (
               <div
                 key={c.id}
-                className={`relative bg-surface-elevated border rounded-3xl p-5 flex flex-col justify-between gap-4 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card ${
+                className={`relative overflow-hidden bg-surface-elevated border rounded-3xl p-5 flex flex-col justify-between gap-4 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card ${
                   isToday
                     ? 'border-amber-400 shadow-[0_0_35px_rgba(212,175,55,0.3)] bg-gradient-to-b from-amber-500/15 to-surface-elevated'
                     : 'border-white/[0.14] hover:border-white/[0.28]'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
+                <AuraHalfCircle position="top-right" variant={isToday ? "gold-purple" : relInfo.aura} size="sm" opacity={0.35} />
+
+                <div className="relative z-10 flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <img
                       src={getAvatarUrl(c.name, c.avatar_url, c.gender)}

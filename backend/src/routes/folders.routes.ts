@@ -5,10 +5,13 @@ import { extractUserId } from './auth.routes.js';
 
 export async function foldersRoutes(fastify: FastifyInstance) {
   // List folders with wish counts
-  fastify.get('/folders', async (req) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+  fastify.get('/folders', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const folders = db.prepare(`
-      SELECT f.*, (SELECT COUNT(*) FROM wishes WHERE folder_id = f.id) as wish_count
+      SELECT f.*, (SELECT COUNT(*) FROM wishes WHERE folder_id = f.id AND user_id = f.user_id) as wish_count
       FROM folders f
       WHERE f.user_id = ?
       ORDER BY f.sort_order ASC, f.created_at ASC
@@ -19,7 +22,10 @@ export async function foldersRoutes(fastify: FastifyInstance) {
 
   // Create folder
   fastify.post('/folders', async (req, reply) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const body = req.body as { name: string; color?: string };
     if (!body.name) {
       return reply.code(400).send({ error: 'Folder name is required' });
@@ -33,12 +39,16 @@ export async function foldersRoutes(fastify: FastifyInstance) {
       body.color || '#C8A96E'
     );
 
-    const created = db.prepare('SELECT * FROM folders WHERE id = ?').get(id);
+    const created = db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
     return { folder: created };
   });
 
   // Update folder
   fastify.put('/folders/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
     const body = req.body as { name?: string; color?: string; sort_order?: number };
 
@@ -47,17 +57,21 @@ export async function foldersRoutes(fastify: FastifyInstance) {
         name = COALESCE(?, name),
         color = COALESCE(?, color),
         sort_order = COALESCE(?, sort_order)
-      WHERE id = ?
-    `).run(body.name?.trim(), body.color, body.sort_order, id);
+      WHERE id = ? AND user_id = ?
+    `).run(body.name?.trim(), body.color, body.sort_order, id, userId);
 
-    const updated = db.prepare('SELECT * FROM folders WHERE id = ?').get(id);
+    const updated = db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
     return { folder: updated };
   });
 
   // Delete folder
-  fastify.delete('/folders/:id', async (req) => {
+  fastify.delete('/folders/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please log in' });
+    }
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM folders WHERE id = ?').run(id);
+    db.prepare('DELETE FROM folders WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 }

@@ -4,8 +4,11 @@ import { parseContactsCsv, importContacts } from '../services/csv.service.js';
 import { extractUserId } from './auth.routes.js';
 export async function contactsRoutes(fastify) {
     // List all contacts with upcoming birthday calculation
-    fastify.get('/contacts', async (req) => {
-        const userId = extractUserId(req) || 'usr_default_master';
+    fastify.get('/contacts', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in to view your contacts' });
+        }
         const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId);
         const today = new Date();
         const currentYear = today.getFullYear();
@@ -44,7 +47,10 @@ export async function contactsRoutes(fastify) {
     });
     // Create single contact
     fastify.post('/contacts', async (req, reply) => {
-        const userId = extractUserId(req) || 'usr_default_master';
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
         const body = req.body;
         if (!body.name || !body.dob_month) {
             return reply.code(400).send({ error: 'Name and Birth Month are required' });
@@ -55,11 +61,15 @@ export async function contactsRoutes(fastify) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
         stmt.run(id, userId, body.name.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender || 'unspecified', body.relationship || 'Friend', body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]));
-        const created = db.prepare('SELECT * FROM contacts WHERE id = ?').get(id);
+        const created = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
         return { contact: created };
     });
     // Update contact
     fastify.put('/contacts/:id', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
         const { id } = req.params;
         const body = req.body;
         const stmt = db.prepare(`
@@ -77,16 +87,20 @@ export async function contactsRoutes(fastify) {
         note = ?,
         extra_fields = ?,
         notify_days = ?
-      WHERE id = ?
+      WHERE id = ? AND user_id = ?
     `);
-        stmt.run(body.name?.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender, body.relationship, body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]), id);
-        const updated = db.prepare('SELECT * FROM contacts WHERE id = ?').get(id);
+        stmt.run(body.name?.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender, body.relationship, body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]), id, userId);
+        const updated = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
         return { contact: updated };
     });
     // Delete contact
-    fastify.delete('/contacts/:id', async (req) => {
+    fastify.delete('/contacts/:id', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
         const { id } = req.params;
-        db.prepare('DELETE FROM contacts WHERE id = ?').run(id);
+        db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
         return { success: true, id };
     });
     // Preview / Parse CSV
@@ -98,8 +112,11 @@ export async function contactsRoutes(fastify) {
         return parseContactsCsv(body.csvContent);
     });
     // Import CSV
-    fastify.post('/contacts/import', async (req) => {
-        const userId = extractUserId(req) || 'usr_default_master';
+    fastify.post('/contacts/import', async (req, reply) => {
+        const userId = extractUserId(req);
+        if (!userId) {
+            return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+        }
         const body = req.body;
         let rowsToImport = body.rows;
         if (!rowsToImport && body.csvContent) {

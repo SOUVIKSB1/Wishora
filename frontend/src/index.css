@@ -121,6 +121,21 @@ select:-webkit-autofill {
   }
 }
 
+@keyframes aura-pulse {
+  0%, 100% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.1) translate3d(4px, -4px, 0);
+    opacity: 0.95;
+  }
+}
+
+.animate-aura-pulse {
+  animation: aura-pulse 7s ease-in-out infinite alternate;
+}
+
 .aurora-mesh {
   position: fixed;
   inset: 0;

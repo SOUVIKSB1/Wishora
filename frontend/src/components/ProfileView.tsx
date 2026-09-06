@@ -3,6 +3,7 @@ import { Crown, Sparkles, Shield, User, Globe, Bell, Check, Cake, Star, Award, F
 import { VelvetButton } from './ui/VelvetButton.js';
 import { GlowBadge } from './ui/GlowBadge.js';
 import { WheelDatePicker } from './ui/WheelDatePicker.js';
+import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
 import { api } from '../services/api.js';
 import { LUXURY_AVATAR_PRESETS, getAvatarUrl, readFileAsDataUrl } from '../utils/avatar.js';
 
@@ -72,13 +73,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate,
             EXECUTIVE CREDENTIALS
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-display font-black text-white">Director Profile & Settings</h1>
-        <p className="text-xs sm:text-sm text-text-2 mt-0.5 font-medium">Manage your director identity, photo avatar, personal birthday radar, and cinema production preferences.</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">Director Profile & Settings</h1>
+        <p className="text-xs sm:text-sm text-text-2 mt-0.5 font-medium leading-relaxed">Manage your director identity, photo avatar, personal birthday radar, and cinema production preferences.</p>
       </div>
 
       {/* ─── HOLOGRAPHIC VIP PASSPORT CARD ─── */}
       <div className="vip-passport-card rounded-3xl p-6 sm:p-7 backdrop-blur-2xl relative overflow-hidden space-y-6">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-400/15 via-purple-500/10 to-transparent rounded-bl-full pointer-events-none" />
+        <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" opacity={0.65} />
+        <AuraHalfCircle position="bottom-left" variant="cyan-emerald" size="sm" opacity={0.4} />
 
         {/* Profile Header & Avatar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-5 border-b border-white/[0.1]">
@@ -225,7 +227,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate,
 
       {/* ─── PREMIUM PRO TIER CARTRIDGE ─── */}
       <div className="relative bg-gradient-to-br from-amber-500/20 via-surface-elevated to-surface border-2 border-amber-400/40 rounded-3xl p-6 backdrop-blur-xl overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.18)]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <AuraHalfCircle position="top-right" variant="sunset" size="md" opacity={0.5} />
+        <AuraHalfCircle position="bottom-left" variant="gold-purple" size="sm" opacity={0.3} />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-mono tracking-widest uppercase font-bold">
               <Crown size={15} />

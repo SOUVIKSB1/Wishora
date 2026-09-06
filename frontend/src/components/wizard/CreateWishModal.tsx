@@ -113,7 +113,12 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [generatedSlug, setGeneratedSlug] = useState<string | undefined>(undefined);
 
-  const { isPlaying, playSynthTheme, stop } = useAudioEngine();
+  const { isPlaying, playSynthTheme, setVolume, setTrim, stop } = useAudioEngine();
+
+  // Automatically pause/stop any playing background track when navigating between wizard steps
+  useEffect(() => {
+    stop();
+  }, [currentStep, stop]);
 
   const recipientAge = React.useMemo(() => {
     if (!formData.recipient_dob) return 25;
@@ -125,10 +130,12 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
   }, [formData.recipient_dob]);
 
   const handleNext = () => {
+    stop();
     if (currentStep < 6) setCurrentStep(s => s + 1);
   };
 
   const handlePrev = () => {
+    stop();
     if (currentStep > 1) setCurrentStep(s => s - 1);
   };
 
@@ -300,8 +307,14 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
                     music_id: id,
                     custom_music_url: customUrl !== undefined ? customUrl : (id.startsWith('custom_') ? prev.custom_music_url : '')
                   }))}
-                  onTrimChange={(start, end) => setFormData(prev => ({ ...prev, music_trim_start: start, music_trim_end: end }))}
-                  onVolumeChange={(vol) => setFormData(prev => ({ ...prev, music_volume: vol }))}
+                  onTrimChange={(start, end) => {
+                    setFormData(prev => ({ ...prev, music_trim_start: start, music_trim_end: end }));
+                    setTrim(start, end);
+                  }}
+                  onVolumeChange={(vol) => {
+                    setFormData(prev => ({ ...prev, music_volume: vol }));
+                    setVolume(vol);
+                  }}
                   onPlayPreview={handlePlayPreview}
                   isPlaying={isPlaying}
                 />

@@ -85,15 +85,6 @@ export async function authRoutes(fastify) {
         VALUES (?, ?, ?, ?, ?, ?, ?, 'google', 'free')
       `).run(userId, email, body.display_name || email.split('@')[0], body.avatar_url || null, body.gender || 'unspecified', body.user_dob || '2000-01-01', googleId);
             createDefaultUserFolders(userId);
-            // Auto-claim any wishes, contacts, folders created under default master session
-            try {
-                db.prepare('UPDATE wishes SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
-                db.prepare('UPDATE contacts SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
-                db.prepare('UPDATE wish_folders SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
-            }
-            catch (e) {
-                console.warn('Could not migrate default master records:', e);
-            }
             user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, plan, created_at FROM users WHERE id = ?').get(userId);
         }
         return { user, token: user.id, is_new_user: isNewUser };

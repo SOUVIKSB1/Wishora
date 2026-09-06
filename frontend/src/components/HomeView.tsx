@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Contact } from '../types/contact.js';
 import { Wish } from '../types/wish.js';
-import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck, Share2, MessageCircle, ExternalLink, Check } from 'lucide-react';
+import { Sparkles, Calendar, Plus, Play, Eye, Video, ArrowRight, Heart, PartyPopper, Clock, Cake, Compass, Film, Flame, Star, ShieldCheck, Share2, MessageCircle, ExternalLink, Check, Crown } from 'lucide-react';
 import { VelvetButton } from './ui/VelvetButton.js';
 import { GlowBadge } from './ui/GlowBadge.js';
+import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
 import confetti from 'canvas-confetti';
 import { getAvatarUrl } from '../utils/avatar.js';
 
@@ -126,48 +127,58 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* ─── DIRECTOR COCKPIT HERO BANNER ─── */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-surface-elevated via-[#10101c] to-[#14121f] border border-white/[0.16] p-5 sm:p-8 backdrop-blur-2xl overflow-hidden shadow-glass-card">
-        {/* Spatial background glow */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-amber-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-cyan-500/15 to-transparent rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-6 sm:space-y-7">
+      {/* ─── SLEEK DIRECTOR EXECUTIVE COMMAND BAR ─── */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-[#12101c] via-[#0d0d16] to-[#15111f] border border-white/[0.14] p-5 sm:p-6 backdrop-blur-2xl overflow-hidden shadow-glass-card group">
+        {/* Animated soothing half-circle corner auras */}
+        <AuraHalfCircle position="top-right" variant="gold-purple" size="lg" />
+        <AuraHalfCircle position="bottom-left" variant="cyan-emerald" size="md" opacity={0.6} />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
-          <div className="max-w-xl space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                <Sparkles size={12} className="animate-spin-slow text-amber-300" />
-                BESPOKE 90s BIRTHDAY CINEMA
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[10px] font-mono font-bold tracking-widest uppercase shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+                <Sparkles size={11} className="text-amber-300 animate-spin-slow" />
+                DIRECTOR SUITE
+              </span>
+              <span className="text-[10px] font-mono text-text-3 font-semibold">
+                • {wishes.length} Films Created
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight leading-tight">
-              Direct an unforgettable <span className="gold-gradient-text">90-second birthday film</span>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-white tracking-tight leading-tight">
+              Direct bespoke <span className="gold-gradient-text">birthday experiences</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-text-2 leading-relaxed font-medium">
-              3D interactive candlelight, dynamic historical milestone memory lane, polaroid album, and live emotion capture.
+            <p className="text-xs sm:text-sm text-text-2 font-medium max-w-lg leading-relaxed">
+              Direct 3D interactive cakes, milestone time capsules, polaroid reels, and soundscapes.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row lg:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            <VelvetButton
-              variant="glow"
-              size="lg"
-              icon={<Sparkles size={16} />}
+          {/* Sleek action pills */}
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap flex-shrink-0">
+            <button
               onClick={onNewWish}
-              className="w-full sm:w-auto shadow-[0_0_30px_rgba(212,175,55,0.35)] justify-center"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C5A059] text-[#06060A] text-xs font-black shadow-[0_0_20px_rgba(200,169,110,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
-              Direct New Wish
-            </VelvetButton>
+              <Sparkles size={14} className="text-[#06060A] fill-[#06060A]" />
+              <span>Direct Wish</span>
+            </button>
+
+            <button
+              onClick={() => onNavigateToTab('wishbook')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
+            >
+              <Film size={13} className="text-amber-400" />
+              <span>Wishbook</span>
+            </button>
 
             <button
               onClick={() => onNavigateToTab('contacts')}
-              className="text-xs font-bold text-text-2 hover:text-white px-4 py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.15] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-xs font-bold text-text-1 hover:text-white transition-all cursor-pointer"
             >
-              <Calendar size={14} className="text-text-3" />
-              <span>Calendar ({contacts.length})</span>
+              <Calendar size={13} className="text-sky-400" />
+              <span>Calendar</span>
             </button>
           </div>
         </div>
@@ -176,13 +187,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* ─── DIRECTOR'S BIRTHDAY RADAR MICRO-HUD (ISOLATED & COMPACT) ─── */}
       {user?.user_dob && (
         <div
-          className={`relative bg-surface-elevated/90 border rounded-3xl p-4 sm:p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-glass-card transition-all ${
+          className={`relative bg-surface-elevated/90 border rounded-3xl p-4 sm:p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-glass-card transition-all overflow-hidden ${
             isUserBirthdayToday
               ? 'border-pink-400/60 shadow-[0_0_30px_rgba(244,114,182,0.3)] bg-gradient-to-r from-pink-500/15 via-surface-elevated to-amber-500/15'
               : 'border-white/[0.14] hover:border-amber-400/40'
           }`}
         >
-          <div className="flex items-center gap-3 min-w-0">
+          {/* Soothing half-circle aura */}
+          <AuraHalfCircle position="top-right" variant={isUserBirthdayToday ? "rose-gold" : "gold-purple"} size="sm" opacity={0.7} />
+
+          <div className="relative z-10 flex items-center gap-3 min-w-0">
             <div
               onClick={isUserBirthdayToday ? triggerBirthdayConfetti : undefined}
               className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 border transition-all ${
@@ -214,7 +228,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Compact Digital Countdown */}
-          <div className="flex items-center justify-center gap-1.5 bg-void/80 border border-white/[0.1] px-3.5 py-2 rounded-2xl backdrop-blur-md self-stretch sm:self-auto">
+          <div className="relative z-10 flex items-center justify-center gap-1.5 bg-void/80 border border-white/[0.1] px-3.5 py-2 rounded-2xl backdrop-blur-md self-stretch sm:self-auto">
             {[
               { label: 'D', val: personalTimeLeft.days },
               { label: 'H', val: personalTimeLeft.hours },
@@ -243,6 +257,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             val: stats?.total_wishes ?? wishes.length,
             icon: <Film size={16} className="text-amber-300" />,
             glow: 'from-amber-500/20 to-yellow-600/5',
+            auraVariant: 'gold-purple' as const,
             border: 'hover:border-amber-400/50',
             action: () => onNavigateToTab('wishbook')
           },
@@ -251,6 +266,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             val: stats?.total_opens ?? 0,
             icon: <Eye size={16} className="text-sky-300" />,
             glow: 'from-sky-500/20 to-blue-600/5',
+            auraVariant: 'cyan-emerald' as const,
             border: 'hover:border-sky-400/50',
             action: () => onNavigateToTab('wishbook')
           },
@@ -259,6 +275,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             val: stats?.total_reactions ?? wishes.filter(w => !!w.reaction_url).length,
             icon: <Video size={16} className="text-pink-300" />,
             glow: 'from-pink-500/20 to-rose-600/5',
+            auraVariant: 'rose-gold' as const,
             border: 'hover:border-pink-400/50',
             action: () => onNavigateToTab('wishbook')
           },
@@ -267,6 +284,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             val: stats?.total_contacts ?? contacts.length,
             icon: <Calendar size={16} className="text-emerald-300" />,
             glow: 'from-emerald-500/20 to-teal-600/5',
+            auraVariant: 'emerald-gold' as const,
             border: 'hover:border-emerald-400/50',
             action: () => onNavigateToTab('contacts')
           },
@@ -274,9 +292,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div
             key={idx}
             onClick={item.action}
-            className={`relative bg-gradient-to-b ${item.glow} bg-surface-elevated border border-white/[0.12] ${item.border} rounded-2xl p-3.5 sm:p-5 backdrop-blur-xl cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-glass-card`}
+            className={`relative overflow-hidden bg-gradient-to-b ${item.glow} bg-surface-elevated border border-white/[0.12] ${item.border} rounded-2xl p-3.5 sm:p-5 backdrop-blur-xl cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-glass-card`}
           >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <AuraHalfCircle position="top-right" variant={item.auraVariant} size="sm" opacity={0.6} />
+
+            <div className="relative z-10 flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[9px] sm:text-[10px] font-mono text-text-3 font-extrabold tracking-wider uppercase group-hover:text-text-1 transition-colors">
                 {item.label}
               </span>
@@ -284,7 +304,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {item.icon}
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
+            <div className="relative z-10 flex items-baseline justify-between">
               <span className="text-2xl sm:text-3xl font-display font-black text-white font-mono">
                 {item.val}
               </span>
@@ -320,9 +340,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {drafts.map(d => (
               <div
                 key={d.id}
-                className="bg-surface-elevated/90 border border-amber-500/35 hover:border-amber-400 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 backdrop-blur-xl group transition-all shadow-glass-card"
+                className="relative overflow-hidden bg-surface-elevated/90 border border-amber-500/35 hover:border-amber-400 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 backdrop-blur-xl group transition-all shadow-glass-card"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <AuraHalfCircle position="top-right" variant="gold-purple" size="sm" opacity={0.4} />
+
+                <div className="relative z-10 flex items-center gap-3 min-w-0">
                   <img
                     src={getAvatarUrl(
                       d.recipient_name,
@@ -351,7 +373,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   size="sm"
                   variant="primary"
                   onClick={() => onSelectWish && onSelectWish(d)}
-                  className="flex-shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+                  className="relative z-10 flex-shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
                 >
                   Resume
                 </VelvetButton>
@@ -390,13 +412,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
               return (
                 <div
                   key={c.id}
-                  className={`flex-shrink-0 w-60 sm:w-64 bg-surface-elevated/95 border rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 ${
+                  className={`relative overflow-hidden flex-shrink-0 w-60 sm:w-64 bg-surface-elevated/95 border rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 ${
                     isToday
                       ? 'border-amber-400 shadow-[0_0_30px_rgba(212,175,55,0.35)] bg-gradient-to-b from-amber-500/15 to-surface-elevated'
                       : 'border-white/[0.14] hover:border-white/[0.28] shadow-glass-card'
                   }`}
                 >
-                  <div>
+                  <AuraHalfCircle position="top-right" variant={isToday ? "gold-purple" : "cyan-emerald"} size="sm" opacity={0.4} />
+
+                  <div className="relative z-10">
                     <div className="flex items-center justify-between mb-3">
                       {isToday ? (
                         <GlowBadge variant="gold">TODAY 🎉</GlowBadge>
@@ -426,15 +450,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
                   </div>
 
-                  <VelvetButton
-                    size="sm"
-                    variant={isToday ? 'glow' : 'primary'}
-                    icon={<Sparkles size={13} />}
-                    onClick={() => onCreateWishForContact(c)}
-                    className="w-full font-bold cursor-pointer justify-center"
-                  >
-                    Direct Wish
-                  </VelvetButton>
+                  <div className="relative z-10">
+                    <VelvetButton
+                      size="sm"
+                      variant={isToday ? 'glow' : 'primary'}
+                      icon={<Sparkles size={13} />}
+                      onClick={() => onCreateWishForContact(c)}
+                      className="w-full font-bold cursor-pointer justify-center"
+                    >
+                      Direct Wish
+                    </VelvetButton>
+                  </div>
                 </div>
               );
             })
@@ -467,9 +493,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
             recentWishes.map(w => (
               <div
                 key={w.id}
-                className="bg-surface-elevated/90 border border-white/[0.14] hover:border-amber-400/50 rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3 backdrop-blur-xl group transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card"
+                className="relative overflow-hidden bg-surface-elevated/90 border border-white/[0.14] hover:border-amber-400/50 rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3 backdrop-blur-xl group transition-all duration-200 hover:-translate-y-0.5 shadow-glass-card"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <AuraHalfCircle position="top-right" variant="sunset" size="sm" opacity={0.35} />
+
+                <div className="relative z-10 flex items-center gap-3 min-w-0">
                   <img
                     src={getAvatarUrl(
                       w.recipient_name,
@@ -494,7 +522,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.08] gap-2">
+                <div className="relative z-10 flex items-center justify-between pt-2 border-t border-white/[0.08] gap-2">
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleFastShareWhatsApp(w)}

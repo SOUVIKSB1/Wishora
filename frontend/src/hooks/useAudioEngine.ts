@@ -25,6 +25,32 @@ export function useAudioEngine() {
   }, []);
 
   const audioIntervalRef = useRef<number | null>(null);
+  const trimStartRef = useRef<number>(0);
+  const trimEndRef = useRef<number | undefined>(undefined);
+
+  const setVolume = useCallback((volume: number) => {
+    currentVolumeRef.current = Math.max(0, Math.min(1, volume));
+    const effectiveVolume = isMuted ? 0 : Math.max(0, Math.min(1, currentVolumeRef.current * 0.5));
+    if (htmlAudioRef.current) {
+      htmlAudioRef.current.volume = effectiveVolume;
+    }
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = isMuted ? 0 : 0.2 * currentVolumeRef.current;
+    }
+  }, [isMuted]);
+
+  const setTrim = useCallback((trimStart: number, trimEnd?: number) => {
+    trimStartRef.current = Math.max(0, trimStart || 0);
+    trimEndRef.current = trimEnd;
+
+    if (htmlAudioRef.current) {
+      const cur = htmlAudioRef.current.currentTime;
+      const effectiveEnd = (trimEnd && trimEnd > trimStart) ? trimEnd : (htmlAudioRef.current.duration || Infinity);
+      if (cur < trimStartRef.current || cur >= effectiveEnd) {
+        htmlAudioRef.current.currentTime = trimStartRef.current;
+      }
+    }
+  }, []);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
@@ -55,16 +81,21 @@ export function useAudioEngine() {
   ) => {
     stop();
     currentVolumeRef.current = Math.max(0, Math.min(1, volume));
+    trimStartRef.current = Math.max(0, trimStart || 0);
+    trimEndRef.current = trimEnd;
+
+    // Dimmed background audio level curve (50% master multiplier)
+    const effectiveBgVolume = isMuted ? 0 : Math.max(0, Math.min(1, currentVolumeRef.current * 0.5));
 
     // 1. If it's a real audio file (Data URL or HTTP web URL)
     if (themePreset && (themePreset.startsWith('data:audio') || themePreset.startsWith('http://') || themePreset.startsWith('https://') || themePreset.startsWith('blob:'))) {
       try {
         const audio = new Audio(themePreset);
         audio.preload = 'auto';
-        audio.volume = isMuted ? 0 : currentVolumeRef.current;
+        audio.volume = effectiveBgVolume;
         htmlAudioRef.current = audio;
 
-        const startSec = Math.max(0, trimStart || 0);
+        const startSec = trimStartRef.current;
 
         const seekToStartAndPlay = () => {
           try {
@@ -81,14 +112,16 @@ export function useAudioEngine() {
           seekToStartAndPlay();
         });
 
-        // Fast high-frequency time checking for gapless looping between trimStart and trimEnd
+        // Fast high-frequency time checking for real-time gapless looping between trimStart and trimEnd
         const loopMonitor = () => {
           if (!htmlAudioRef.current) return;
           const cur = htmlAudioRef.current.currentTime;
-          const effectiveEnd = (trimEnd && trimEnd > startSec) ? trimEnd : (htmlAudioRef.current.duration || Infinity);
+          const start = trimStartRef.current;
+          const end = trimEndRef.current;
+          const effectiveEnd = (end && end > start) ? end : (htmlAudioRef.current.duration || Infinity);
 
           if (cur >= effectiveEnd - 0.08) {
-            htmlAudioRef.current.currentTime = startSec;
+            htmlAudioRef.current.currentTime = start;
             if (htmlAudioRef.current.paused) {
               htmlAudioRef.current.play().catch(() => {});
             }
@@ -100,7 +133,7 @@ export function useAudioEngine() {
 
         audio.onended = () => {
           if (htmlAudioRef.current) {
-            htmlAudioRef.current.currentTime = startSec;
+            htmlAudioRef.current.currentTime = trimStartRef.current;
             htmlAudioRef.current.play().catch(() => {});
           }
         };
@@ -120,7 +153,7 @@ export function useAudioEngine() {
     setIsPlaying(true);
     const ctx = audioCtxRef.current;
     const masterGain = gainNodeRef.current;
-    masterGain.gain.value = isMuted ? 0 : 0.35 * currentVolumeRef.current;
+    masterGain.gain.value = isMuted ? 0 : 0.2 * currentVolumeRef.current;
 
     const presetLower = (themePreset || '').toLowerCase();
 
@@ -333,6 +366,8 @@ export function useAudioEngine() {
     isPlaying,
     isMuted,
     playSynthTheme,
+    setVolume,
+    setTrim,
     playCelebrationChime,
     playPaperCrinkleSound,
     stop,

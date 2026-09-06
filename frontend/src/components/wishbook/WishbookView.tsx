@@ -4,6 +4,7 @@ import { Folder } from '../../types/contact.js';
 import { Folder as FolderIcon, Sparkles, Clock, Video, Eye, Plus, Trash2, ExternalLink, Play, Pause, MessageSquare, X, ArrowLeft, Mic, Share2, Heart, Check, Edit3, ChevronDown, CheckCircle2, Layers, Calendar, History, Send, MessageCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { GlowBadge } from '../ui/GlowBadge.js';
+import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { getAvatarUrl } from '../../utils/avatar.js';
 import { api } from '../../services/api.js';
 
@@ -316,12 +317,14 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
                     {displayItems.map((w, idx) => (
                       <div
                         key={w.id}
-                        className={`bg-surface-elevated border rounded-3xl p-5 flex flex-col justify-between gap-4 backdrop-blur-xl group transition-all shadow-glass-card relative ${
+                        className={`overflow-hidden bg-surface-elevated border rounded-3xl p-5 flex flex-col justify-between gap-4 backdrop-blur-xl group transition-all shadow-glass-card relative ${
                           isStack && !isExpanded
                             ? 'border-accent/40 shadow-[0_10px_25px_rgba(200,169,110,0.12)] ring-1 ring-accent/30'
                             : 'border-white/[0.14] hover:border-accent/60'
                         }`}
                       >
+                        <AuraHalfCircle position="top-right" variant="gold-purple" size="sm" opacity={0.3} />
+
                         {/* Visual layered stack backing effect when collapsed */}
                         {isStack && !isExpanded && idx === 0 && (
                           <div className="absolute -bottom-1.5 inset-x-4 h-3 bg-surface border-b border-accent/20 rounded-b-2xl -z-10 opacity-70" />

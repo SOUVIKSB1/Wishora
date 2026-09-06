@@ -6,8 +6,12 @@ import { extractUserId } from './auth.routes.js';
 
 export async function contactsRoutes(fastify: FastifyInstance) {
   // List all contacts with upcoming birthday calculation
-  fastify.get('/contacts', async (req) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+  fastify.get('/contacts', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please sign in to view your contacts' });
+    }
+
     const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId) as any[];
 
     const today = new Date();
@@ -53,9 +57,12 @@ export async function contactsRoutes(fastify: FastifyInstance) {
 
   // Create single contact
   fastify.post('/contacts', async (req, reply) => {
-    const userId = extractUserId(req) || 'usr_default_master';
-    const body = req.body as any;
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+    }
 
+    const body = req.body as any;
     if (!body.name || !body.dob_month) {
       return reply.code(400).send({ error: 'Name and Birth Month are required' });
     }
@@ -84,12 +91,17 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       JSON.stringify(body.notify_days || [1, 3])
     );
 
-    const created = db.prepare('SELECT * FROM contacts WHERE id = ?').get(id);
+    const created = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
     return { contact: created };
   });
 
   // Update contact
   fastify.put('/contacts/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+    }
+
     const { id } = req.params as { id: string };
     const body = req.body as any;
 
@@ -108,7 +120,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
         note = ?,
         extra_fields = ?,
         notify_days = ?
-      WHERE id = ?
+      WHERE id = ? AND user_id = ?
     `);
 
     stmt.run(
@@ -125,17 +137,23 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       body.note?.trim() || null,
       JSON.stringify(body.extra_fields || {}),
       JSON.stringify(body.notify_days || [1, 3]),
-      id
+      id,
+      userId
     );
 
-    const updated = db.prepare('SELECT * FROM contacts WHERE id = ?').get(id);
+    const updated = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
     return { contact: updated };
   });
 
   // Delete contact
-  fastify.delete('/contacts/:id', async (req) => {
+  fastify.delete('/contacts/:id', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+    }
+
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM contacts WHERE id = ?').run(id);
+    db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 
@@ -149,8 +167,12 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // Import CSV
-  fastify.post('/contacts/import', async (req) => {
-    const userId = extractUserId(req) || 'usr_default_master';
+  fastify.post('/contacts/import', async (req, reply) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
+    }
+
     const body = req.body as { csvContent?: string; rows?: any[]; conflictStrategy?: 'update' | 'skip' | 'duplicate' };
 
     let rowsToImport = body.rows;
