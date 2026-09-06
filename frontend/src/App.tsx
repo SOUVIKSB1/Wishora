@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Home, BookOpen, Users, User, Plus, Sparkles, LogOut, ShieldCheck, Bell, Check, X } from 'lucide-react';
-import { api, getAuthToken, clearAuthToken } from './services/api.js';
+import { api, getAuthToken, clearAuthToken, getCachedUser, setCachedUser } from './services/api.js';
 import { logOutOfFirebase } from './services/firebase.js';
 import { Contact, Folder } from './types/contact.js';
 import { Wish, WishExperienceData } from './types/wish.js';
@@ -15,19 +15,21 @@ import { CsvImportModal } from './components/contacts/CsvImportModal.js';
 import { OnboardingModal } from './components/OnboardingModal.js';
 import { AuthModal } from './components/auth/AuthModal.js';
 import { WishExperienceView } from './components/experience/WishExperienceView.js';
-import { ParticleField } from './components/canvas/ParticleField.js';
+import { DynamicBackground } from './components/ui/DynamicBackground.js';
 import { getAvatarUrl } from './utils/avatar.js';
+import { haptic } from './utils/haptics.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'wishbook' | 'contacts' | 'profile' | 'admin'>('home');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(() => getCachedUser());
   const [stats, setStats] = useState<any>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!getAuthToken());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getAuthToken() || !!getCachedUser());
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Modals state
@@ -57,7 +59,15 @@ export function App() {
 
     // Check auth status
     const token = getAuthToken();
-    if (token) {
+    const cachedUser = getCachedUser();
+    if (token || cachedUser) {
+      if (cachedUser) {
+        setUser(cachedUser);
+        setIsAuthenticated(true);
+        if (cachedUser.role === 'admin') {
+          setActiveTab('admin');
+        }
+      }
       loadInitialData();
     } else {
       setIsCheckingAuth(false);
@@ -77,6 +87,7 @@ export function App() {
 
       if (authRes.user) {
         setUser(authRes.user);
+        setCachedUser(authRes.user);
         setStats(authRes.stats);
         setIsAuthenticated(true);
         setShowAuthModal(false);
@@ -84,8 +95,19 @@ export function App() {
           setActiveTab('admin');
         }
       } else {
-        setIsAuthenticated(false);
-        setShowAuthModal(true);
+        const cached = getCachedUser();
+        if (cached && getAuthToken()) {
+          // Keep user logged in with cached identity - never auto logout!
+          setUser(cached);
+          setIsAuthenticated(true);
+          setShowAuthModal(false);
+          if (cached.role === 'admin') {
+            setActiveTab('admin');
+          }
+        } else {
+          setIsAuthenticated(false);
+          setShowAuthModal(true);
+        }
       }
       setContacts(contactsRes.contacts || []);
       setWishes(wishesRes.wishes || []);
@@ -202,7 +224,7 @@ export function App() {
   if (user?.role === 'admin') {
     return (
       <div className="min-h-screen bg-void text-text-1 flex flex-col selection:bg-accent selection:text-void relative overflow-x-hidden p-4 sm:p-6">
-        <ParticleField density={25} colors={['#D4AF37', '#9333EA', '#0284C7']} />
+        <DynamicBackground />
         <AdminDashboard currentUser={user} onLogout={handleLogout} />
       </div>
     );
@@ -211,25 +233,30 @@ export function App() {
   // ─── STANDARD USER INTERFACE (REGULAR USERS) ───
   return (
     <div className="min-h-screen bg-void text-text-1 flex flex-col selection:bg-accent selection:text-void relative overflow-x-hidden">
-      {/* Ambient Particle Field in Background */}
-      <ParticleField density={30} colors={['#C8A96E', '#FFF1D0', '#7C3AED']} />
+      {/* Dynamic Ambient Rainbow Aura & Particle Flow in Background */}
+      <DynamicBackground />
 
       {/* Sticky Glass Top Navbar */}
       <header className="sticky top-0 z-30 bg-void/85 backdrop-blur-2xl border-b border-white/[0.09] px-4 sm:px-8 py-3 transition-all">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           {/* Brand Logo & Title */}
           <div
-            onClick={() => setActiveTab('home')}
+            onClick={() => {
+              haptic.light();
+              setActiveTab('home');
+            }}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-accent to-yellow-700 flex items-center justify-center font-display font-black text-void text-base sm:text-lg shadow-[0_0_15px_rgba(200,169,110,0.35)] group-hover:scale-105 transition-transform flex-shrink-0">
-              W
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-rose-500 via-purple-600 to-cyan-400 p-[1.5px] shadow-[0_0_20px_rgba(244,114,182,0.35)] group-hover:scale-105 transition-transform flex-shrink-0">
+              <div className="w-full h-full bg-void rounded-[14px] flex items-center justify-center font-display font-black text-amber-300 text-base sm:text-lg">
+                W
+              </div>
             </div>
             <div>
-              <span className="text-base sm:text-lg font-display font-black tracking-tight text-white group-hover:text-accent transition-colors block leading-tight">
+              <span className="text-base sm:text-lg font-display font-black tracking-tight text-white group-hover:text-amber-400 transition-colors block leading-tight">
                 WISHORA
               </span>
-              <span className="text-[9px] font-mono tracking-widest text-accent uppercase block font-semibold">
+              <span className="text-[9px] font-mono tracking-widest text-amber-400/90 uppercase block font-semibold">
                 CINEMATIC ENGINE
               </span>
             </div>
@@ -240,13 +267,16 @@ export function App() {
             {/* Notification Center Bell */}
             {user && (
               <button
-                onClick={() => setShowNotificationsModal(true)}
-                className="relative p-2 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-text-2 hover:text-white transition-all cursor-pointer flex-shrink-0"
+                onClick={() => {
+                  haptic.light();
+                  setShowNotificationsModal(true);
+                }}
+                className="relative p-2 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-text-2 hover:text-white transition-all cursor-pointer flex-shrink-0 active:scale-95"
                 title="Announcements & Bulletins"
               >
                 <Bell size={16} />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-void text-[9px] font-mono font-black flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-void text-[9px] font-mono font-black flex items-center justify-center animate-pulse shadow-[0_0_10px_rgba(212,175,55,0.8)]">
                     {unreadNotificationsCount}
                   </span>
                 )}
@@ -255,11 +285,14 @@ export function App() {
 
             {user && (
               <button
-                onClick={() => setActiveTab('profile')}
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden border transition-all cursor-pointer p-0.5 flex-shrink-0 ${
+                onClick={() => {
+                  haptic.light();
+                  setActiveTab('profile');
+                }}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden border transition-all cursor-pointer p-0.5 flex-shrink-0 active:scale-95 ${
                   activeTab === 'profile'
-                    ? 'border-accent ring-2 ring-accent/40 scale-105'
-                    : 'border-white/[0.14] hover:border-accent/60'
+                    ? 'border-amber-400 ring-2 ring-amber-400/40 scale-105 shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                    : 'border-white/[0.14] hover:border-amber-400/60'
                 }`}
                 title="Director Profile"
               >
@@ -348,7 +381,7 @@ export function App() {
 
       {/* Floating Bottom Navigation Bar (Apple-Grade Responsive Dock) */}
       <nav className="fixed bottom-3 sm:bottom-4 inset-x-0 z-40 max-w-sm sm:max-w-md mx-auto px-3 sm:px-4 pointer-events-none pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="bg-[#0B0B14]/90 border border-white/[0.14] rounded-full p-1.5 sm:p-2 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_25px_rgba(200,169,110,0.15)] flex items-center justify-around pointer-events-auto">
+        <div className="bg-[#0B0B14]/90 border border-white/[0.14] rounded-full p-1.5 sm:p-2 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(212,175,55,0.18)] flex items-center justify-around pointer-events-auto relative">
           {[
             { key: 'home', label: 'Home', icon: <Home size={17} /> },
             { key: 'wishbook', label: 'Wishbook', icon: <BookOpen size={17} /> },
@@ -357,18 +390,29 @@ export function App() {
           ].map((item) => {
             const isActive = activeTab === item.key;
             return (
-              <button
+              <motion.button
                 key={item.key}
-                onClick={() => setActiveTab(item.key as any)}
-                className={`relative flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                whileTap={{ scale: 0.92 }}
+                onClick={() => {
+                  haptic.light();
+                  setActiveTab(item.key as any);
+                }}
+                className={`relative flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer z-10 ${
                   isActive
-                    ? 'bg-gradient-to-r from-amber-400 via-accent to-yellow-500 text-void shadow-[0_0_15px_rgba(200,169,110,0.5)] font-extrabold scale-[1.02]'
-                    : 'text-text-2 hover:text-white hover:bg-white/[0.06]'
+                    ? 'text-void font-extrabold'
+                    : 'text-text-2 hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeDockPill"
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 shadow-[0_0_20px_rgba(212,175,55,0.6)] -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                  />
+                )}
                 {item.icon}
                 <span className="text-[11px] tracking-tight">{item.label}</span>
-              </button>
+              </motion.button>
             );
           })}
         </div>

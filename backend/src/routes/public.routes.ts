@@ -8,7 +8,7 @@ export async function publicRoutes(fastify: FastifyInstance) {
   fastify.get('/w/:slug', async (req, reply) => {
     const { slug } = req.params as { slug: string };
 
-    const wish = db.prepare(`
+    const wish = await db.prepare(`
       SELECT w.*, 
              COALESCE(c.avatar_url, (SELECT c2.avatar_url FROM contacts c2 WHERE LOWER(TRIM(c2.name)) = LOWER(TRIM(w.recipient_name)) LIMIT 1)) as recipient_avatar_url,
              COALESCE(w.recipient_gender, c.gender, (SELECT c3.gender FROM contacts c3 WHERE LOWER(TRIM(c3.name)) = LOWER(TRIM(w.recipient_name)) LIMIT 1), 'unspecified') as recipient_gender,
@@ -30,8 +30,8 @@ export async function publicRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ error: 'Wish experience not found' });
     }
 
-    const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(wish.id);
-    const reactions = db.prepare('SELECT * FROM reactions WHERE wish_id = ? ORDER BY created_at DESC').all(wish.id);
+    const photos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(wish.id);
+    const reactions = await db.prepare('SELECT * FROM reactions WHERE wish_id = ? ORDER BY created_at DESC').all(wish.id);
 
     // Calculate age & birthday timing
     const dob = new Date(wish.recipient_dob);
@@ -113,7 +113,7 @@ export async function publicRoutes(fastify: FastifyInstance) {
   // Log open event
   fastify.post('/w/:slug/open', async (req, reply) => {
     const { slug } = req.params as { slug: string };
-    const wish = db.prepare('SELECT id FROM wishes WHERE slug = ?').get(slug) as { id: string } | undefined;
+    const wish = await db.prepare('SELECT id FROM wishes WHERE slug = ?').get(slug) as { id: string } | undefined;
 
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
@@ -126,13 +126,13 @@ export async function publicRoutes(fastify: FastifyInstance) {
     const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
     // Insert open record
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO wish_opens (id, wish_id, ip_hash, country, device_type)
       VALUES (?, ?, ?, ?, ?)
     `).run(`opn_${nanoid(8)}`, wish.id, ipHash, 'US', deviceType);
 
     // Update wish open count
-    db.prepare(`
+    await db.prepare(`
       UPDATE wishes SET open_count = open_count + 1, last_opened_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(wish.id);
@@ -145,7 +145,7 @@ export async function publicRoutes(fastify: FastifyInstance) {
     const { slug } = req.params as { slug: string };
     const body = req.body as { media_url?: string; type?: string; message_text?: string; duration?: number };
 
-    const wish = db.prepare('SELECT id FROM wishes WHERE slug = ?').get(slug) as { id: string } | undefined;
+    const wish = await db.prepare('SELECT id FROM wishes WHERE slug = ?').get(slug) as { id: string } | undefined;
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
@@ -154,14 +154,14 @@ export async function publicRoutes(fastify: FastifyInstance) {
     const mediaUrl = body.media_url || (body.type === 'video' ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400' : '');
     const messageText = body.message_text || '';
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO reactions (id, wish_id, type, message_text, media_url, duration)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(reactionId, wish.id, body.type || 'text', messageText, mediaUrl, body.duration || 0);
 
     // Update wish reaction_url & touch timestamp
     const displayUrl = mediaUrl || (body.type === 'text' ? 'text_reaction' : 'voice_reaction');
-    db.prepare('UPDATE wishes SET reaction_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(displayUrl, wish.id);
+    await db.prepare('UPDATE wishes SET reaction_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(displayUrl, wish.id);
 
     return { success: true, reactionId };
   });

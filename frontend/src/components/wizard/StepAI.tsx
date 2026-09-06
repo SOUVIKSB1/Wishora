@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Globe, RefreshCw, Wand2, Quote, Check } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { api } from '../../services/api.js';
+import { haptic } from '../../utils/haptics.js';
 
 interface StepAIProps {
   name: string;
@@ -56,6 +57,7 @@ export const StepAI: React.FC<StepAIProps> = ({
       });
       if (res.suggestions && res.suggestions.length > 0) {
         setSuggestions(res.suggestions);
+        haptic.sparkle();
         if (!wishText) {
           onChange(res.suggestions[0].message, language);
         }
@@ -68,6 +70,7 @@ export const StepAI: React.FC<StepAIProps> = ({
   };
 
   const handleSelectSuggestion = (msg: string, idx: number) => {
+    haptic.medium();
     onChange(msg, language);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 1500);

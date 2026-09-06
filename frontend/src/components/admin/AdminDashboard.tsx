@@ -3,11 +3,12 @@ import {
   ShieldCheck, Users, Music, FileText, Bell, Sparkles, Trash2, 
   Plus, Search, RefreshCw, AlertTriangle, Check, X,
   Play, Pause, Send, ExternalLink, Filter, ShieldAlert, LogOut,
-  Upload, Volume2, Pencil, CheckCircle2, Music2
+  Upload, Volume2, Pencil, CheckCircle2, Music2, Loader2
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { VelvetButton } from '../ui/VelvetButton.js';
+import { haptic } from '../../utils/haptics.js';
 
 interface AdminDashboardProps {
   currentUser: any;
@@ -41,6 +42,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [musicFilePreviewUrl, setMusicFilePreviewUrl] = useState<string>('');
   const [isReadingAudio, setIsReadingAudio] = useState(false);
+  const [isPublishingMusic, setIsPublishingMusic] = useState(false);
+  const [publishingStep, setPublishingStep] = useState('Encoding Studio Audio Buffer...');
+  const [deletingMusicId, setDeletingMusicId] = useState<string | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const [newMusic, setNewMusic] = useState({
     title: '',
     artist: 'Wishora Studio',
@@ -189,8 +194,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       showToast('error', 'Please upload a valid audio song file');
       return;
     }
+    setIsPublishingMusic(true);
+    setPublishingStep('Encoding & processing studio audio track...');
     try {
       const tags = newMusic.mood_tags.split(',').map(t => t.trim()).filter(Boolean);
+      
+      setPublishingStep('Publishing & syncing to Wishora global library...');
       const res = await api.addAdminMusic({
         title: newMusic.title,
         artist: newMusic.artist,
@@ -199,7 +208,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
         duration: Number(newMusic.duration) || 60,
         mood_tags: tags
       });
-      showToast('success', `Track "${newMusic.title}" published to library`);
+      haptic.success();
+      showToast('success', `Track "${newMusic.title}" successfully published to library! ✨`);
       setMusicTracks(prev => [res.track, ...prev]);
       setShowAddMusicModal(false);
       setMusicFile(null);
@@ -214,17 +224,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       });
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to publish music track');
+    } finally {
+      setIsPublishingMusic(false);
     }
   };
 
   const handleDeleteMusic = async (id: string, title: string) => {
     if (!confirm(`Delete music track "${title}" permanently?`)) return;
+    setDeletingMusicId(id);
     try {
       await api.deleteAdminMusic(id);
-      showToast('success', `Track "${title}" deleted`);
+      haptic.medium();
+      showToast('success', `Track "${title}" deleted successfully`);
       setMusicTracks(prev => prev.filter(t => t.id !== id));
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to delete track');
+    } finally {
+      setDeletingMusicId(null);
     }
   };
 
@@ -298,12 +314,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
 
   const handleDeleteTemplate = async (id: string, title: string) => {
     if (!confirm(`Delete template "${title}"?`)) return;
+    setDeletingTemplateId(id);
     try {
       await api.deleteAdminTemplate(id);
-      showToast('success', `Template deleted`);
+      haptic.medium();
+      showToast('success', `Template deleted successfully`);
       setTemplates(prev => prev.filter(t => t.id !== id));
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to delete template');
+    } finally {
+      setDeletingTemplateId(null);
     }
   };
 
@@ -787,142 +807,184 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 <Music2 size={20} className="text-amber-400" />
                 <span>Upload Audio Song File</span>
               </h3>
-              <button onClick={() => setShowAddMusicModal(false)} className="text-text-3 hover:text-white cursor-pointer p-1">
-                <X size={18} />
-              </button>
+              {!isPublishingMusic && (
+                <button onClick={() => setShowAddMusicModal(false)} className="text-text-3 hover:text-white cursor-pointer p-1">
+                  <X size={18} />
+                </button>
+              )}
             </div>
 
-            <form onSubmit={handleCreateMusic} className="space-y-4">
-              {/* File Upload Drop Zone */}
-              <div>
-                <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1.5">
-                  SELECT AUDIO FILE (.MP3, .WAV, .M4A, .AAC, .FLAC, .OGG)
-                </label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer ${
-                    musicFile 
-                      ? 'border-amber-400/70 bg-amber-400/[0.08]' 
-                      : 'border-white/[0.15] hover:border-amber-400/50 hover:bg-white/[0.02]'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
-                    className="hidden"
-                    onChange={handleAudioFileSelected}
-                  />
-
-                  {musicFile ? (
-                    <div className="space-y-2">
-                      <div className="w-10 h-10 rounded-full bg-amber-400 text-void flex items-center justify-center mx-auto shadow-glow-sm">
-                        <Volume2 size={20} />
-                      </div>
-                      <div className="text-xs font-bold text-white truncate max-w-xs mx-auto">
-                        {musicFile.name}
-                      </div>
-                      <div className="text-[10px] font-mono text-amber-300">
-                        {Math.round(musicFile.size / 1024)} KB • Duration: {newMusic.duration}s
-                      </div>
-                      <span className="inline-block text-[10px] font-mono text-text-3 underline">
-                        Click to choose another song
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="w-10 h-10 rounded-2xl bg-white/[0.06] text-amber-400 flex items-center justify-center mx-auto">
-                        <Upload size={18} />
-                      </div>
-                      <p className="text-xs font-bold text-white">
-                        Click to browse or drop an audio song
-                      </p>
-                      <p className="text-[10px] font-mono text-text-3">
-                        MP3, WAV, M4A, FLAC supported
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Audio Playback Test Preview */}
-              {musicFilePreviewUrl && (
-                <div className="p-3 bg-void/80 border border-white/[0.1] rounded-2xl flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="text-xs font-bold text-white">Live Audio Loaded</span>
+            {isPublishingMusic ? (
+              <div className="py-10 px-4 flex flex-col items-center justify-center text-center space-y-6 animate-scaleIn">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full border-4 border-amber-400/20 border-t-amber-400 animate-spin shadow-[0_0_30px_rgba(212,175,55,0.4)]" />
+                  <div className="absolute inset-0 flex items-center justify-center text-amber-300">
+                    <Music2 size={26} className="animate-pulse" />
                   </div>
-                  <audio controls src={musicFilePreviewUrl} className="h-8 max-w-[220px]" />
                 </div>
-              )}
 
-              {/* Metadata Fields */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Song Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., Midnight Sunset Melody"
-                    value={newMusic.title}
-                    onChange={e => setNewMusic({ ...newMusic, title: e.target.value })}
-                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                  />
+                {/* Animated Soundwave Visualizer */}
+                <div className="flex items-center justify-center gap-1.5 h-10">
+                  {[40, 80, 100, 65, 95, 50, 85, 60, 90, 70].map((h, i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 bg-gradient-to-t from-amber-500 via-rose-500 to-yellow-300 rounded-full animate-soundwave-pulse"
+                      style={{ animationDelay: `${i * 0.1}s`, height: `${h}%` }}
+                    />
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Artist / Composer</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Wishora Orchestra"
-                    value={newMusic.artist}
-                    onChange={e => setNewMusic({ ...newMusic, artist: e.target.value })}
-                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                  />
+
+                <div className="space-y-2 max-w-sm">
+                  <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Publishing Studio Audio Track
+                  </h4>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-mono font-bold animate-pulse">
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>{publishingStep}</span>
+                  </div>
+                  <p className="text-[11px] text-text-2 font-medium leading-relaxed">
+                    Uploading high-fidelity audio data and indexing for all directors. Please keep this screen active...
+                  </p>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            ) : (
+              <form onSubmit={handleCreateMusic} className="space-y-4">
+                {/* File Upload Drop Zone */}
                 <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Genre Category</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Lo-fi Chill"
-                    value={newMusic.genre}
-                    onChange={e => setNewMusic({ ...newMusic, genre: e.target.value })}
-                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Mood Tags</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., happy, celebratory"
-                    value={newMusic.mood_tags}
-                    onChange={e => setNewMusic({ ...newMusic, mood_tags: e.target.value })}
-                    className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
+                  <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1.5">
+                    SELECT AUDIO FILE (.MP3, .WAV, .M4A, .AAC, .FLAC, .OGG)
+                  </label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer ${
+                      musicFile 
+                        ? 'border-amber-400/70 bg-amber-400/[0.08]' 
+                        : 'border-white/[0.15] hover:border-amber-400/50 hover:bg-white/[0.02]'
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg"
+                      className="hidden"
+                      onChange={handleAudioFileSelected}
+                    />
 
-              <div className="pt-3 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddMusicModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-text-3 hover:text-white cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <VelvetButton 
-                  type="submit" 
-                  variant="glow" 
-                  size="md"
-                  disabled={!newMusic.storage_url || isReadingAudio}
-                >
-                  <Upload size={14} />
-                  <span>Publish Song to App</span>
-                </VelvetButton>
-              </div>
-            </form>
+                    {isReadingAudio ? (
+                      <div className="space-y-2 py-3">
+                        <Loader2 size={24} className="animate-spin text-amber-400 mx-auto" />
+                        <p className="text-xs font-bold text-white">Reading Audio & Computing Duration...</p>
+                      </div>
+                    ) : musicFile ? (
+                      <div className="space-y-2">
+                        <div className="w-10 h-10 rounded-full bg-amber-400 text-void flex items-center justify-center mx-auto shadow-glow-sm">
+                          <Volume2 size={20} />
+                        </div>
+                        <div className="text-xs font-bold text-white truncate max-w-xs mx-auto">
+                          {musicFile.name}
+                        </div>
+                        <div className="text-[10px] font-mono text-amber-300 font-bold">
+                          {Math.round(musicFile.size / 1024)} KB • Duration: {newMusic.duration}s
+                        </div>
+                        <span className="inline-block text-[10px] font-mono text-text-3 underline">
+                          Click to choose another song
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="w-10 h-10 rounded-2xl bg-white/[0.06] text-amber-400 flex items-center justify-center mx-auto">
+                          <Upload size={18} />
+                        </div>
+                        <p className="text-xs font-bold text-white">
+                          Click to browse or drop an audio song
+                        </p>
+                        <p className="text-[10px] font-mono text-text-3">
+                          MP3, WAV, M4A, FLAC supported
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Audio Playback Test Preview */}
+                {musicFilePreviewUrl && !isReadingAudio && (
+                  <div className="p-3 bg-void/80 border border-white/[0.1] rounded-2xl flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="text-xs font-bold text-white">Live Audio Loaded</span>
+                    </div>
+                    <audio controls src={musicFilePreviewUrl} className="h-8 max-w-[220px]" />
+                  </div>
+                )}
+
+                {/* Metadata Fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Song Title</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g., Midnight Sunset Melody"
+                      value={newMusic.title}
+                      onChange={e => setNewMusic({ ...newMusic, title: e.target.value })}
+                      className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Artist / Composer</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Wishora Studio"
+                      value={newMusic.artist}
+                      onChange={e => setNewMusic({ ...newMusic, artist: e.target.value })}
+                      className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Genre Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Lo-fi Chill"
+                      value={newMusic.genre}
+                      onChange={e => setNewMusic({ ...newMusic, genre: e.target.value })}
+                      className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono text-text-3 uppercase font-bold mb-1">Mood Tags</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., happy, celebratory"
+                      value={newMusic.mood_tags}
+                      onChange={e => setNewMusic({ ...newMusic, mood_tags: e.target.value })}
+                      className="w-full bg-void border border-white/[0.12] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMusicModal(false)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-text-3 hover:text-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <VelvetButton 
+                    type="submit" 
+                    variant="glow" 
+                    size="md"
+                    disabled={!newMusic.storage_url || isReadingAudio}
+                  >
+                    <Upload size={14} />
+                    <span>Publish Song to App</span>
+                  </VelvetButton>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

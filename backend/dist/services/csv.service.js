@@ -71,7 +71,7 @@ export function parseContactsCsv(csvContent) {
     const validCount = rows.filter(r => r.isValid).length;
     return { rows, total: rows.length, validCount };
 }
-export function importContacts(userId, rows, conflictStrategy = 'update') {
+export async function importContacts(userId, rows, conflictStrategy = 'update') {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
@@ -84,30 +84,29 @@ export function importContacts(userId, rows, conflictStrategy = 'update') {
     UPDATE contacts SET nickname = ?, dob_year = ?, gender = ?, relationship = ?, email = ?, phone = ?, note = ?, extra_fields = ?
     WHERE id = ?
   `);
-    const transaction = db.transaction(() => {
+    await db.transaction(async () => {
         for (const row of rows) {
             if (!row.isValid) {
                 skipped++;
                 continue;
             }
-            const existing = checkExisting.get(userId, row.name.toLowerCase(), row.dob_month, row.dob_day || null);
+            const existing = await checkExisting.get(userId, row.name.toLowerCase(), row.dob_month, row.dob_day || null);
             if (existing) {
                 if (conflictStrategy === 'skip') {
                     skipped++;
                     continue;
                 }
                 else if (conflictStrategy === 'update') {
-                    updateStmt.run(row.nickname || null, row.dob_year || null, row.gender || 'unspecified', row.relationship || 'Friend', row.email || null, row.phone || null, row.note || null, JSON.stringify(row.extra_fields || {}), existing.id);
+                    await updateStmt.run(row.nickname || null, row.dob_year || null, row.gender || 'unspecified', row.relationship || 'Friend', row.email || null, row.phone || null, row.note || null, JSON.stringify(row.extra_fields || {}), existing.id);
                     updated++;
                     continue;
                 }
             }
             // Insert new
-            insertStmt.run(`cnt_${nanoid(10)}`, userId, row.name, row.nickname || null, row.dob_day || null, row.dob_month, row.dob_year || null, row.gender || 'unspecified', row.relationship || 'Friend', row.email || null, row.phone || null, row.note || null, JSON.stringify(row.extra_fields || {}));
+            await insertStmt.run(`cnt_${nanoid(10)}`, userId, row.name, row.nickname || null, row.dob_day || null, row.dob_month, row.dob_year || null, row.gender || 'unspecified', row.relationship || 'Friend', row.email || null, row.phone || null, row.note || null, JSON.stringify(row.extra_fields || {}));
             imported++;
         }
     });
-    transaction();
     return { imported, updated, skipped };
 }
 function parseDateString(str) {

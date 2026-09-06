@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
+import { haptic } from '../../utils/haptics.js';
 
 interface EnvelopeScreenProps {
   recipientName: string;
@@ -19,6 +21,7 @@ export const EnvelopeScreen: React.FC<EnvelopeScreenProps> = ({
 
   const handleOpen = () => {
     if (isOpening) return;
+    haptic.impact();
     setIsOpening(true);
     setTimeout(() => {
       onUnseal();
@@ -35,7 +38,9 @@ export const EnvelopeScreen: React.FC<EnvelopeScreenProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-void p-4 overflow-hidden select-none">
-      {/* Background ambient spotlight */}
+      {/* Background ambient colorful auras */}
+      <AuraHalfCircle position="top-right" variant="rainbow" size="lg" opacity={0.7} />
+      <AuraHalfCircle position="bottom-left" variant="neon-violet" size="md" opacity={0.5} />
       <div className="absolute top-1/4 w-96 h-96 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Recipient Headline */}

@@ -2,13 +2,15 @@ import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { haptic } from '../../utils/haptics.js';
 
 interface VelvetButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'glow' | 'outline' | 'subtle';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'glow' | 'outline' | 'subtle' | 'rainbow' | 'cyan' | 'emerald' | 'rose';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   isLoading?: boolean;
+  hapticType?: 'light' | 'medium' | 'success' | 'celebrate' | 'impact' | 'sparkle' | 'none';
 }
 
 export const VelvetButton: React.FC<VelvetButtonProps> = ({
@@ -17,14 +19,20 @@ export const VelvetButton: React.FC<VelvetButtonProps> = ({
   size = 'md',
   icon,
   isLoading = false,
+  hapticType = 'light',
   className,
   disabled,
   onClick,
   ...props
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (navigator.vibrate) {
-      navigator.vibrate(12);
+    if (hapticType !== 'none') {
+      if (hapticType === 'medium') haptic.medium();
+      else if (hapticType === 'success') haptic.success();
+      else if (hapticType === 'celebrate') haptic.celebrate();
+      else if (hapticType === 'impact') haptic.impact();
+      else if (hapticType === 'sparkle') haptic.sparkle();
+      else haptic.light();
     }
     if (onClick) onClick(e);
   };
@@ -45,6 +53,10 @@ export const VelvetButton: React.FC<VelvetButtonProps> = ({
     subtle: 'bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.18] text-white active:scale-[0.97]',
     danger: 'bg-rose-500/20 text-rose-100 border border-rose-500/40 hover:bg-rose-500/30 active:scale-[0.97]',
     glow: 'bg-gradient-to-r from-[#FDE047] via-[#E5C178] to-[#9C753A] text-[#06060A] font-extrabold shadow-[0_0_30px_rgba(200,169,110,0.55)] hover:brightness-110 active:scale-[0.97]',
+    rainbow: 'bg-gradient-to-r from-amber-400 via-rose-500 via-purple-600 to-cyan-400 text-white font-black shadow-[0_0_25px_rgba(244,114,182,0.45)] hover:brightness-110 active:scale-[0.97]',
+    cyan: 'bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-black shadow-[0_0_25px_rgba(56,189,248,0.45)] hover:brightness-110 active:scale-[0.97]',
+    emerald: 'bg-gradient-to-r from-emerald-400 to-teal-600 text-void font-black shadow-[0_0_25px_rgba(52,211,153,0.45)] hover:brightness-110 active:scale-[0.97]',
+    rose: 'bg-gradient-to-r from-pink-500 via-rose-500 to-rose-700 text-white font-black shadow-[0_0_25px_rgba(244,114,182,0.45)] hover:brightness-110 active:scale-[0.97]',
   };
 
   return (

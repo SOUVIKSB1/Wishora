@@ -10,7 +10,7 @@ export async function foldersRoutes(fastify: FastifyInstance) {
     if (!userId) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
-    const folders = db.prepare(`
+    const folders = await db.prepare(`
       SELECT f.*, (SELECT COUNT(*) FROM wishes WHERE folder_id = f.id AND user_id = f.user_id) as wish_count
       FROM folders f
       WHERE f.user_id = ?
@@ -32,14 +32,14 @@ export async function foldersRoutes(fastify: FastifyInstance) {
     }
 
     const id = `fld_${nanoid(8)}`;
-    db.prepare('INSERT INTO folders (id, user_id, name, color) VALUES (?, ?, ?, ?)').run(
+    await db.prepare('INSERT INTO folders (id, user_id, name, color) VALUES (?, ?, ?, ?)').run(
       id,
       userId,
       body.name.trim(),
       body.color || '#C8A96E'
     );
 
-    const created = db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
+    const created = await db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
     return { folder: created };
   });
 
@@ -52,7 +52,7 @@ export async function foldersRoutes(fastify: FastifyInstance) {
     const { id } = req.params as { id: string };
     const body = req.body as { name?: string; color?: string; sort_order?: number };
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE folders SET
         name = COALESCE(?, name),
         color = COALESCE(?, color),
@@ -60,7 +60,7 @@ export async function foldersRoutes(fastify: FastifyInstance) {
       WHERE id = ? AND user_id = ?
     `).run(body.name?.trim(), body.color, body.sort_order, id, userId);
 
-    const updated = db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
+    const updated = await db.prepare('SELECT * FROM folders WHERE id = ? AND user_id = ?').get(id, userId);
     return { folder: updated };
   });
 
@@ -71,7 +71,7 @@ export async function foldersRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM folders WHERE id = ? AND user_id = ?').run(id, userId);
+    await db.prepare('DELETE FROM folders WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 }

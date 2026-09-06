@@ -7,6 +7,8 @@ import { GlowBadge } from './ui/GlowBadge.js';
 import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
 import confetti from 'canvas-confetti';
 import { getAvatarUrl } from '../utils/avatar.js';
+import { haptic } from '../utils/haptics.js';
+import { motion } from 'framer-motion';
 
 interface HomeViewProps {
   user: any;
@@ -90,23 +92,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const isUserBirthdayToday = bdayInfo?.is_today || personalTimeLeft.days === 0;
 
   const triggerBirthdayConfetti = () => {
+    haptic.celebrate();
     confetti({
       particleCount: 120,
       spread: 100,
       origin: { y: 0.6 },
-      colors: ['#D4AF37', '#F472B6', '#38BDF8', '#34D399']
+      colors: ['#D4AF37', '#F472B6', '#38BDF8', '#34D399', '#A855F7']
     });
   };
 
   const [copiedWishSlug, setCopiedWishSlug] = useState<string | null>(null);
 
   const handleCopyShareLink = (slug: string) => {
+    haptic.success();
     navigator.clipboard.writeText(`${window.location.origin}/w/${slug}`);
     setCopiedWishSlug(slug);
     setTimeout(() => setCopiedWishSlug(null), 2000);
   };
 
   const handleFastShareWhatsApp = (w: Wish) => {
+    haptic.medium();
     const shareUrl = `${window.location.origin}/w/${w.slug}`;
     const text = encodeURIComponent(`✨ Happy Birthday ${w.recipient_name}! I directed a bespoke birthday film experience just for you: ${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');

@@ -9,7 +9,7 @@ export async function contactsRoutes(fastify) {
         if (!userId) {
             return reply.code(401).send({ error: 'Unauthorized: Please sign in to view your contacts' });
         }
-        const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId);
+        const contacts = await db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId);
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth() + 1;
@@ -60,8 +60,8 @@ export async function contactsRoutes(fastify) {
       INSERT INTO contacts (id, user_id, name, nickname, dob_day, dob_month, dob_year, gender, relationship, email, phone, avatar_url, note, extra_fields, notify_days)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-        stmt.run(id, userId, body.name.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender || 'unspecified', body.relationship || 'Friend', body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]));
-        const created = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
+        await stmt.run(id, userId, body.name.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender || 'unspecified', body.relationship || 'Friend', body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]));
+        const created = await db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
         return { contact: created };
     });
     // Update contact
@@ -89,8 +89,8 @@ export async function contactsRoutes(fastify) {
         notify_days = ?
       WHERE id = ? AND user_id = ?
     `);
-        stmt.run(body.name?.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender, body.relationship, body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]), id, userId);
-        const updated = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
+        await stmt.run(body.name?.trim(), body.nickname?.trim() || null, body.dob_day || null, body.dob_month, body.dob_year || null, body.gender, body.relationship, body.email?.trim() || null, body.phone?.trim() || null, body.avatar_url || null, body.note?.trim() || null, JSON.stringify(body.extra_fields || {}), JSON.stringify(body.notify_days || [1, 3]), id, userId);
+        const updated = await db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
         return { contact: updated };
     });
     // Delete contact
@@ -100,7 +100,7 @@ export async function contactsRoutes(fastify) {
             return reply.code(401).send({ error: 'Unauthorized: Please sign in' });
         }
         const { id } = req.params;
-        db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
+        await db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
         return { success: true, id };
     });
     // Preview / Parse CSV
@@ -126,7 +126,7 @@ export async function contactsRoutes(fastify) {
         if (!rowsToImport || rowsToImport.length === 0) {
             return { success: false, error: 'No valid rows to import' };
         }
-        const result = importContacts(userId, rowsToImport, body.conflictStrategy || 'update');
+        const result = await importContacts(userId, rowsToImport, body.conflictStrategy || 'update');
         return { success: true, ...result };
     });
 }

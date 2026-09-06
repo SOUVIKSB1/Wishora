@@ -21,7 +21,7 @@ export async function authRoutes(fastify) {
             return reply.code(400).send({ error: 'Email, password, and name are required' });
         }
         const email = body.email.trim().toLowerCase();
-        const existing = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(email);
+        const existing = await db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?)').get(email);
         if (existing) {
             return reply.code(409).send({ error: 'An account with this email already exists' });
         }
@@ -31,12 +31,12 @@ export async function authRoutes(fastify) {
         const gender = body.gender || 'unspecified';
         const displayName = body.display_name.trim();
         const avatarUrl = body.avatar_url || null;
-        db.prepare(`
+        await db.prepare(`
       INSERT INTO users (id, email, password_hash, display_name, avatar_url, gender, user_dob, auth_provider, plan)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'local', 'free')
     `).run(userId, email, passHash, displayName, avatarUrl, gender, dob);
-        createDefaultUserFolders(userId);
-        const created = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
+        await createDefaultUserFolders(userId);
+        const created = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
         return { user: created, token: userId };
     });
     // Login with email & password
@@ -47,7 +47,7 @@ export async function authRoutes(fastify) {
         }
         const email = body.email.trim().toLowerCase();
         const passHash = hashPassword(body.password);
-        const user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, password_hash FROM users WHERE LOWER(email) = ?').get(email);
+        const user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, password_hash FROM users WHERE LOWER(email) = LOWER(?)').get(email);
         if (!user || user.password_hash !== passHash) {
             return reply.code(401).send({ error: 'Invalid email or password' });
         }
@@ -62,18 +62,18 @@ export async function authRoutes(fastify) {
         }
         const email = body.email.trim().toLowerCase();
         const googleId = body.google_id || body.uid || null;
-        let user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE LOWER(email) = ? OR (google_id IS NOT NULL AND google_id = ?)').get(email, googleId);
+        let user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE LOWER(email) = LOWER(?) OR (google_id IS NOT NULL AND google_id = ?)').get(email, googleId);
         if (user) {
             // Returning user -> Direct immediate login with zero DOB/gender friction
             if (googleId || body.avatar_url) {
-                db.prepare(`
+                await db.prepare(`
           UPDATE users SET
             google_id = COALESCE(?, google_id),
-            avatar_url = COALESCE(avatar_url, ?)
+            avatar_url = COALESCE(?, avatar_url)
           WHERE id = ?
         `).run(googleId, body.avatar_url || null, user.id);
             }
-            user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(user.id);
+            user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(user.id);
             return { user, token: user.id, is_new_user: false };
         }
         // New Google user -> Return flag so client prompts DOB & gender once
@@ -95,9 +95,9 @@ export async function authRoutes(fastify) {
         }
         const email = body.email.trim().toLowerCase();
         const googleId = body.google_id || null;
-        let user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE LOWER(email) = ?').get(email);
+        let user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE LOWER(email) = LOWER(?)').get(email);
         if (user) {
-            db.prepare(`
+            await db.prepare(`
         UPDATE users SET
           display_name = COALESCE(?, display_name),
           avatar_url = COALESCE(?, avatar_url),
@@ -106,7 +106,7 @@ export async function authRoutes(fastify) {
           google_id = COALESCE(?, google_id)
         WHERE id = ?
       `).run(body.display_name || user.display_name, body.avatar_url || user.avatar_url, body.gender || user.gender, body.user_dob || user.user_dob, googleId || user.google_id, user.id);
-            user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(user.id);
+            user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(user.id);
             return { user, token: user.id };
         }
         const userId = `usr_${nanoid(10)}`;
@@ -114,12 +114,12 @@ export async function authRoutes(fastify) {
         const gender = body.gender || 'unspecified';
         const displayName = body.display_name || email.split('@')[0];
         const avatarUrl = body.avatar_url || null;
-        db.prepare(`
+        await db.prepare(`
       INSERT INTO users (id, email, display_name, avatar_url, gender, user_dob, google_id, auth_provider, role, plan)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'google', 'user', 'free')
     `).run(userId, email, displayName, avatarUrl, gender, dob, googleId);
-        createDefaultUserFolders(userId);
-        const created = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
+        await createDefaultUserFolders(userId);
+        const created = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
         return { user: created, token: created.id };
     });
     // Get current user profile & isolated dashboard stats
@@ -128,11 +128,11 @@ export async function authRoutes(fastify) {
         if (!userId) {
             return reply.code(401).send({ error: 'Unauthorized: Please log in' });
         }
-        const user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
+        const user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
         if (!user) {
             return reply.code(401).send({ error: 'User session expired or not found' });
         }
-        const stats = db.prepare(`
+        const stats = await db.prepare(`
       SELECT 
         (SELECT COUNT(*) FROM wishes WHERE user_id = ?) as total_wishes,
         (SELECT COALESCE(SUM(open_count), 0) FROM wishes WHERE user_id = ?) as total_opens,
@@ -173,7 +173,7 @@ export async function authRoutes(fastify) {
             return reply.code(401).send({ error: 'Unauthorized: Please log in' });
         }
         const body = req.body;
-        db.prepare(`
+        await db.prepare(`
       UPDATE users SET
         display_name = COALESCE(?, display_name),
         avatar_url = COALESCE(?, avatar_url),
@@ -182,8 +182,8 @@ export async function authRoutes(fastify) {
         plan = COALESCE(?, plan)
       WHERE id = ?
     `).run(body.display_name !== undefined ? body.display_name : null, body.avatar_url !== undefined ? body.avatar_url : null, body.gender !== undefined ? body.gender : null, body.user_dob !== undefined ? body.user_dob : null, body.plan !== undefined ? body.plan : null, userId);
-        const user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
-        const stats = db.prepare(`
+        const user = await db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, role, plan, created_at FROM users WHERE id = ?').get(userId);
+        const stats = await db.prepare(`
       SELECT 
         (SELECT COUNT(*) FROM wishes WHERE user_id = ?) as total_wishes,
         (SELECT COALESCE(SUM(open_count), 0) FROM wishes WHERE user_id = ?) as total_opens,
@@ -223,7 +223,7 @@ export async function authRoutes(fastify) {
         if (!userId) {
             return reply.code(401).send({ error: 'Unauthorized' });
         }
-        const notifications = db.prepare(`
+        const notifications = await db.prepare(`
       SELECT * FROM system_notifications
       WHERE user_id IS NULL OR user_id = ?
       ORDER BY created_at DESC
@@ -237,7 +237,7 @@ export async function authRoutes(fastify) {
         if (!userId)
             return reply.code(401).send({ error: 'Unauthorized' });
         const { id } = req.params;
-        db.prepare('UPDATE system_notifications SET is_read = 1 WHERE id = ?').run(id);
+        await db.prepare('UPDATE system_notifications SET is_read = 1 WHERE id = ?').run(id);
         return { success: true };
     });
 }

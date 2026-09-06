@@ -1,7 +1,7 @@
 import React from 'react';
 
 export type AuraPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
-export type AuraVariant = 'gold-purple' | 'cyan-emerald' | 'rose-gold' | 'cosmic' | 'sunset' | 'emerald-gold';
+export type AuraVariant = 'gold-purple' | 'cyan-emerald' | 'rose-gold' | 'cosmic' | 'sunset' | 'emerald-gold' | 'rainbow' | 'neon-violet' | 'electric-cyan';
 export type AuraSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface AuraHalfCircleProps {
@@ -21,10 +21,10 @@ export const AuraHalfCircle: React.FC<AuraHalfCircleProps> = ({
 }) => {
   // Size mappings
   const sizeClasses = {
-    sm: 'w-24 h-24 sm:w-32 sm:h-32',
-    md: 'w-40 h-40 sm:w-56 sm:h-56',
-    lg: 'w-56 h-56 sm:w-72 sm:h-72',
-    xl: 'w-72 h-72 sm:w-96 sm:h-96',
+    sm: 'w-28 h-28 sm:w-36 sm:h-36',
+    md: 'w-44 h-44 sm:w-60 sm:h-60',
+    lg: 'w-60 h-60 sm:w-80 sm:h-80',
+    xl: 'w-80 h-80 sm:w-[28rem] sm:h-[28rem]',
   }[size];
 
   // Position & shape mappings
@@ -39,12 +39,15 @@ export const AuraHalfCircle: React.FC<AuraHalfCircleProps> = ({
 
   // Variant gradient mappings
   const gradientClasses = {
-    'gold-purple': 'bg-gradient-to-bl from-amber-400/25 via-purple-600/20 via-pink-500/10 to-transparent',
-    'cyan-emerald': 'bg-gradient-to-tr from-cyan-400/25 via-emerald-500/20 via-blue-600/10 to-transparent',
-    'rose-gold': 'bg-gradient-to-bl from-pink-500/25 via-amber-400/20 via-purple-600/10 to-transparent',
-    'cosmic': 'bg-gradient-to-bl from-indigo-500/25 via-purple-500/20 via-fuchsia-500/10 to-transparent',
-    'sunset': 'bg-gradient-to-tr from-rose-500/25 via-amber-500/20 via-orange-400/10 to-transparent',
-    'emerald-gold': 'bg-gradient-to-bl from-emerald-400/25 via-amber-400/15 to-transparent',
+    'gold-purple': 'bg-gradient-to-bl from-amber-400/35 via-purple-600/30 via-pink-500/20 to-transparent',
+    'cyan-emerald': 'bg-gradient-to-tr from-cyan-400/35 via-emerald-500/30 via-blue-600/20 to-transparent',
+    'rose-gold': 'bg-gradient-to-bl from-pink-500/35 via-amber-400/30 via-purple-600/20 to-transparent',
+    'cosmic': 'bg-gradient-to-bl from-indigo-500/35 via-purple-500/30 via-fuchsia-500/25 to-transparent',
+    'sunset': 'bg-gradient-to-tr from-rose-500/35 via-amber-500/30 via-orange-400/20 to-transparent',
+    'emerald-gold': 'bg-gradient-to-bl from-emerald-400/35 via-teal-500/25 via-amber-400/20 to-transparent',
+    'rainbow': 'bg-gradient-to-tr from-amber-400/35 via-rose-500/30 via-cyan-400/30 to-purple-600/25',
+    'neon-violet': 'bg-gradient-to-bl from-purple-500/40 via-fuchsia-600/30 to-transparent',
+    'electric-cyan': 'bg-gradient-to-tr from-cyan-400/40 via-sky-500/30 via-indigo-600/20 to-transparent',
   }[variant];
 
   return (

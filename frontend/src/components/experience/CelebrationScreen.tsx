@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight, Volume2, Video, MessageSquare, Heart } from 'luci
 import { BalloonCanvas } from '../canvas/BalloonCanvas.js';
 import { THEMES, ThemeKey } from '../../types/theme.js';
 import confetti from 'canvas-confetti';
+import { haptic } from '../../utils/haptics.js';
 
 interface CelebrationScreenProps {
   recipientName: string;
@@ -24,6 +25,7 @@ export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
   const firstName = recipientName ? recipientName.trim().split(' ')[0] : 'Friend';
 
   useEffect(() => {
+    haptic.celebrate();
     // Initial cannon bursts from corners
     const end = Date.now() + 2.5 * 1000;
     const colors = theme.particleColors;

@@ -14,6 +14,7 @@ export function warmUpBackend() {
 warmUpBackend();
 
 const TOKEN_KEY = 'wishora_auth_token';
+const CACHED_USER_KEY = 'wishora_cached_user';
 
 export function getAuthToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -25,6 +26,24 @@ export function setAuthToken(token: string) {
 
 export function clearAuthToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(CACHED_USER_KEY);
+}
+
+export function getCachedUser(): any | null {
+  try {
+    const raw = localStorage.getItem(CACHED_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedUser(user: any) {
+  if (user) {
+    localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(CACHED_USER_KEY);
+  }
 }
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -61,23 +80,40 @@ export const api = {
   register: async (data: { email: string; password?: string; display_name: string; user_dob?: string; gender?: string; avatar_url?: string }) => {
     const res = await fetchApi<{ user: any; token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
     if (res.token) setAuthToken(res.token);
+    if (res.user) setCachedUser(res.user);
     return res;
   },
   login: async (email: string, password: string) => {
     const res = await fetchApi<{ user: any; token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
     if (res.token) setAuthToken(res.token);
+    if (res.user) setCachedUser(res.user);
     return res;
   },
   googleLogin: async (data: { email: string; google_id?: string; display_name?: string; avatar_url?: string; user_dob?: string; gender?: string }) => {
     const res = await fetchApi<{ user: any; token: string; is_new_user?: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify(data) });
     if (res.token) setAuthToken(res.token);
+    if (res.user) setCachedUser(res.user);
+    return res;
+  },
+  googleComplete: async (data: { email: string; google_id?: string; display_name: string; avatar_url?: string; user_dob: string; gender: string }) => {
+    const res = await fetchApi<{ user: any; token: string }>('/auth/google-complete', { method: 'POST', body: JSON.stringify(data) });
+    if (res.token) setAuthToken(res.token);
+    if (res.user) setCachedUser(res.user);
     return res;
   },
   logout: () => {
     clearAuthToken();
   },
-  getMe: () => fetchApi<{ user: any; stats: any }>('/auth/me'),
-  updateProfile: (data: any) => fetchApi<{ user: any; stats: any }>('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
+  getMe: async () => {
+    const res = await fetchApi<{ user: any; stats: any }>('/auth/me');
+    if (res.user) setCachedUser(res.user);
+    return res;
+  },
+  updateProfile: async (data: any) => {
+    const res = await fetchApi<{ user: any; stats: any }>('/auth/me', { method: 'PUT', body: JSON.stringify(data) });
+    if (res.user) setCachedUser(res.user);
+    return res;
+  },
 
   // Contacts
   getContacts: () => fetchApi<{ contacts: any[]; total: number }>('/contacts'),
@@ -123,12 +159,7 @@ export const api = {
   submitReaction: (slug: string, data: { type: string; media_url?: string; message_text?: string; duration?: number }) => 
     fetchApi<{ success: boolean; reactionId: string }>(`/w/${slug}/react`, { method: 'POST', body: JSON.stringify(data) }),
 
-  // Google Onboarding Complete
-  googleComplete: async (data: { email: string; google_id?: string; display_name?: string; avatar_url?: string; user_dob: string; gender: string }) => {
-    const res = await fetchApi<{ user: any; token: string }>('/auth/google-complete', { method: 'POST', body: JSON.stringify(data) });
-    if (res.token) setAuthToken(res.token);
-    return res;
-  },
+
 
   // Templates
   getTemplates: () => fetchApi<{ templates: any[] }>('/templates'),

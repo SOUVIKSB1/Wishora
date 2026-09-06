@@ -6,6 +6,8 @@ import { useMicBlowDetection } from '../../hooks/useMicBlowDetection.js';
 import { THEMES, ThemeKey } from '../../types/theme.js';
 import confetti from 'canvas-confetti';
 
+import { haptic } from '../../utils/haptics.js';
+
 interface CakeScreenProps {
   recipientName: string;
   themeKey?: ThemeKey;
@@ -26,15 +28,16 @@ export const CakeScreen: React.FC<CakeScreenProps> = ({
   const [allExtinguished, setAllExtinguished] = useState(false);
 
   const handleBlowOut = () => {
+    haptic.celebrate();
     // Extinguish candles progressively
     setExtinguishedCandles(Array(candleCount).fill(true));
     setAllExtinguished(true);
 
     confetti({
-      particleCount: 100,
-      spread: 90,
+      particleCount: 140,
+      spread: 100,
       origin: { y: 0.55 },
-      colors: theme.particleColors
+      colors: ['#D4AF37', '#F472B6', '#38BDF8', '#34D399', '#A855F7', '#FBBF24']
     });
 
     setTimeout(() => {

@@ -3,6 +3,7 @@ import { Image, Plus, Trash2, Sparkles, Star, MoveUp, MoveDown, UploadCloud, Lin
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { compressAndReadFileAsDataUrl } from '../../utils/avatar.js';
 import { api } from '../../services/api.js';
+import { haptic } from '../../utils/haptics.js';
 
 interface PhotoItem {
   id: string;
@@ -99,6 +100,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
         is_featured: (photos.length === 0 && idx === 0) ? 1 : 0
       }));
 
+      haptic.success();
       onChange([...photos, ...newPhotos]);
     } catch (err) {
       console.error('Error processing photos:', err);
@@ -123,6 +125,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
 
   const handleAddPhotoUrl = (url: string) => {
     if (!url || photos.length >= 12) return;
+    haptic.success();
     const newPhoto: PhotoItem = {
       id: `p_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       storage_url: url,
@@ -134,6 +137,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
   };
 
   const handleRemovePhoto = (id: string) => {
+    haptic.medium();
     onChange(photos.filter(p => p.id !== id));
   };
 

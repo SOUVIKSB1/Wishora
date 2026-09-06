@@ -46,7 +46,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
     sql += ' ORDER BY w.updated_at DESC';
 
-    const wishes = db.prepare(sql).all(...params) as any[];
+    const wishes = await db.prepare(sql).all(...params) as any[];
     return { wishes, total: wishes.length };
   });
 
@@ -57,7 +57,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id } = req.params as { id: string };
-    const wish = db.prepare(`
+    const wish = await db.prepare(`
       SELECT w.*, f.name as folder_name, m.title as music_title, m.genre as music_genre
       FROM wishes w
       LEFT JOIN folders f ON w.folder_id = f.id
@@ -69,10 +69,10 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
 
-    const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
-    const opens = db.prepare('SELECT * FROM wish_opens WHERE wish_id = ? ORDER BY opened_at DESC LIMIT 20').all(id);
-    const reactions = db.prepare('SELECT * FROM reactions WHERE wish_id = ? ORDER BY created_at DESC').all(id);
-    const rawVersions = db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id) as any[];
+    const photos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
+    const opens = await db.prepare('SELECT * FROM wish_opens WHERE wish_id = ? ORDER BY opened_at DESC LIMIT 20').all(id);
+    const reactions = await db.prepare('SELECT * FROM reactions WHERE wish_id = ? ORDER BY created_at DESC').all(id);
+    const rawVersions = await db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id) as any[];
     const versions = rawVersions.map(v => ({
       ...v,
       snapshot: JSON.parse(v.snapshot_data || '{}')
@@ -88,12 +88,12 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id } = req.params as { id: string };
-    const wish = db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    const wish = await db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
 
-    const rawVersions = db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id) as any[];
+    const rawVersions = await db.prepare('SELECT * FROM wish_versions WHERE wish_id = ? ORDER BY version_number DESC').all(id) as any[];
     const versions = rawVersions.map(v => ({
       ...v,
       snapshot: JSON.parse(v.snapshot_data || '{}')
@@ -108,12 +108,12 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id, versionId } = req.params as { id: string; versionId: string };
-    const wish = db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    const wish = await db.prepare('SELECT id FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
 
-    const versionRecord = db.prepare('SELECT * FROM wish_versions WHERE id = ? AND wish_id = ?').get(versionId, id) as any;
+    const versionRecord = await db.prepare('SELECT * FROM wish_versions WHERE id = ? AND wish_id = ?').get(versionId, id) as any;
     if (!versionRecord) {
       return reply.code(404).send({ error: 'Version record not found' });
     }
@@ -126,12 +126,12 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ error: 'Snapshot data is corrupt or missing' });
     }
 
-    const revertTx = db.transaction(() => {
+    await db.transaction(async () => {
       // Archive current before reverting
-      const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
-      const currentPhotos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
+      const currentWish = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
+      const currentPhotos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
       if (currentWish) {
-        db.prepare(`
+        await db.prepare(`
           INSERT INTO wish_versions (id, wish_id, version_number, snapshot_data, note)
           VALUES (?, ?, ?, ?, ?)
         `).run(
@@ -163,7 +163,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         WHERE id = ? AND user_id = ?
       `);
 
-      stmt.run(
+      await stmt.run(
         oldWish.folder_id,
         oldWish.recipient_name,
         oldWish.recipient_dob,
@@ -182,10 +182,11 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       );
 
       // Restore photos
-      db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
+      await db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
       const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
-      oldPhotos.forEach((p: any, idx: number) => {
-        photoStmt.run(
+      for (let idx = 0; idx < oldPhotos.length; idx++) {
+        const p = oldPhotos[idx];
+        await photoStmt.run(
           `pht_${nanoid(8)}`,
           id,
           p.storage_url || p.url,
@@ -193,13 +194,11 @@ export async function wishesRoutes(fastify: FastifyInstance) {
           idx,
           idx === 0 ? 1 : 0
         );
-      });
+      }
     });
 
-    revertTx();
-
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
-    const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
+    const updated = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    const photos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { success: true, wish: updated, photos };
   });
@@ -215,13 +214,14 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     const slug = body.slug || nanoid(10).toLowerCase();
 
     // Ensure user exists in users table to satisfy foreign key
-    const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    const userExists = await db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
     if (!userExists) {
-      db.prepare(`
-        INSERT OR IGNORE INTO users (id, email, display_name, plan)
+      await db.prepare(`
+        INSERT INTO users (id, email, display_name, plan)
         VALUES (?, ?, ?, 'free')
+        ON CONFLICT (id) DO NOTHING
       `).run(userId, `${userId}@wishora.internal`, 'Director');
-      createDefaultUserFolders(userId);
+      await createDefaultUserFolders(userId);
     }
 
     let contactId = body.contact_id || null;
@@ -230,7 +230,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     // Auto-save into contacts table if direct build without existing contact
     if (!contactId && recipientName && recipientName !== 'Friend') {
       try {
-        const existing = db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(userId, recipientName) as any;
+        const existing = await db.prepare('SELECT id FROM contacts WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(userId, recipientName) as any;
         if (existing) {
           contactId = existing.id;
         } else {
@@ -240,7 +240,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
           const dobDay = parseInt(dobParts[2], 10) || 1;
           const dobYear = parseInt(dobParts[0], 10) || 2000;
 
-          db.prepare(`
+          await db.prepare(`
             INSERT INTO contacts (id, user_id, name, dob_day, dob_month, dob_year, relationship, gender, note)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).run(
@@ -260,31 +260,31 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         console.warn('Auto-save contact skipped or failed:', err);
       }
     } else if (contactId) {
-      const contactExists = db.prepare('SELECT id FROM contacts WHERE id = ? AND user_id = ?').get(contactId, userId);
+      const contactExists = await db.prepare('SELECT id FROM contacts WHERE id = ? AND user_id = ?').get(contactId, userId);
       if (!contactExists) contactId = null;
     }
 
     // Ensure valid folder ID
     let folderId = body.folder_id || null;
     if (folderId) {
-      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
+      const folderExists = await db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
       if (!folderExists) folderId = null;
     }
     if (!folderId) {
-      const defaultFolder = db.prepare('SELECT id FROM folders WHERE user_id = ? LIMIT 1').get(userId) as any;
+      const defaultFolder = await db.prepare('SELECT id FROM folders WHERE user_id = ? LIMIT 1').get(userId) as any;
       folderId = defaultFolder ? defaultFolder.id : null;
     }
 
     // Ensure valid music ID
     let musicId = body.music_id || 'trk_1';
-    const trackExists = db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
+    const trackExists = await db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
     if (!trackExists) {
       musicId = 'trk_1';
     }
 
     const musicVolume = body.music_volume !== undefined ? parseFloat(body.music_volume) : 0.8;
 
-    const insertWishTx = db.transaction(() => {
+    await db.transaction(async () => {
       const stmt = db.prepare(`
         INSERT INTO wishes (
           id, user_id, folder_id, contact_id, slug, recipient_name, recipient_dob,
@@ -293,7 +293,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
+      await stmt.run(
         id,
         userId,
         folderId,
@@ -318,8 +318,9 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       // If photos are provided
       if (Array.isArray(body.photos) && body.photos.length > 0) {
         const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
-        body.photos.forEach((p: any, idx: number) => {
-          photoStmt.run(
+        for (let idx = 0; idx < body.photos.length; idx++) {
+          const p = body.photos[idx];
+          await photoStmt.run(
             `pht_${nanoid(8)}`,
             id,
             typeof p === 'string' ? p : p.storage_url || p.url,
@@ -327,14 +328,12 @@ export async function wishesRoutes(fastify: FastifyInstance) {
             idx,
             idx === 0 ? 1 : 0
           );
-        });
+        }
       }
     });
 
-    insertWishTx();
-
-    const created = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
-    const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
+    const created = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    const photos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { wish: created, photos };
   });
@@ -348,30 +347,30 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     const { id } = req.params as { id: string };
     const body = req.body as any;
 
-    const currentWish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
+    const currentWish = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
     if (!currentWish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
-    const currentPhotos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
+    const currentPhotos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ? ORDER BY sort_order ASC').all(id);
 
     let folderId = body.folder_id;
     if (folderId) {
-      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
+      const folderExists = await db.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').get(folderId, userId);
       if (!folderExists) folderId = null;
     }
 
     let musicId = body.music_id;
     if (musicId) {
-      const trackExists = db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
+      const trackExists = await db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
       if (!trackExists) musicId = 'trk_1';
     }
 
     const musicVolume = body.music_volume !== undefined ? parseFloat(body.music_volume) : (currentWish.music_volume ?? 0.8);
     const nextVer = (currentWish.version || 1) + 1;
 
-    const updateWishTx = db.transaction(() => {
+    await db.transaction(async () => {
       // 1. Archive prior snapshot into wish_versions
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO wish_versions (id, wish_id, version_number, snapshot_data, note)
         VALUES (?, ?, ?, ?, ?)
       `).run(
@@ -404,7 +403,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         WHERE id = ? AND user_id = ?
       `);
 
-      stmt.run(
+      await stmt.run(
         folderId,
         body.recipient_name,
         body.recipient_dob,
@@ -426,10 +425,11 @@ export async function wishesRoutes(fastify: FastifyInstance) {
 
       // Update photos if passed
       if (Array.isArray(body.photos)) {
-        db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
+        await db.prepare('DELETE FROM wish_photos WHERE wish_id = ?').run(id);
         const photoStmt = db.prepare('INSERT INTO wish_photos (id, wish_id, storage_url, caption, sort_order, is_featured) VALUES (?, ?, ?, ?, ?, ?)');
-        body.photos.forEach((p: any, idx: number) => {
-          photoStmt.run(
+        for (let idx = 0; idx < body.photos.length; idx++) {
+          const p = body.photos[idx];
+          await photoStmt.run(
             `pht_${nanoid(8)}`,
             id,
             typeof p === 'string' ? p : p.storage_url || p.url,
@@ -437,14 +437,12 @@ export async function wishesRoutes(fastify: FastifyInstance) {
             idx,
             idx === 0 ? 1 : 0
           );
-        });
+        }
       }
     });
 
-    updateWishTx();
-
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
-    const photos = db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
+    const updated = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId);
+    const photos = await db.prepare('SELECT * FROM wish_photos WHERE wish_id = ?').all(id);
 
     return { wish: updated, photos };
   });
@@ -456,13 +454,13 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id } = req.params as { id: string };
-    const wish = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
+    const wish = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
     if (!wish) {
       return reply.code(404).send({ error: 'Wish not found' });
     }
 
-    db.prepare("UPDATE wishes SET status = 'generated', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?").run(id, userId);
-    const updated = db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
+    await db.prepare("UPDATE wishes SET status = 'generated', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?").run(id, userId);
+    const updated = await db.prepare('SELECT * FROM wishes WHERE id = ? AND user_id = ?').get(id, userId) as any;
 
     return {
       success: true,
@@ -479,7 +477,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please log in' });
     }
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM wishes WHERE id = ? AND user_id = ?').run(id, userId);
+    await db.prepare('DELETE FROM wishes WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 }

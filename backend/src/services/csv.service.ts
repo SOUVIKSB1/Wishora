@@ -97,7 +97,7 @@ export function parseContactsCsv(csvContent: string): { rows: CsvContactRow[]; t
   return { rows, total: rows.length, validCount };
 }
 
-export function importContacts(
+export async function importContacts(
   userId: string,
   rows: CsvContactRow[],
   conflictStrategy: 'update' | 'skip' | 'duplicate' = 'update'
@@ -116,21 +116,21 @@ export function importContacts(
     WHERE id = ?
   `);
 
-  const transaction = db.transaction(() => {
+  await db.transaction(async () => {
     for (const row of rows) {
       if (!row.isValid) {
         skipped++;
         continue;
       }
 
-      const existing = checkExisting.get(userId, row.name.toLowerCase(), row.dob_month, row.dob_day || null) as { id: string } | undefined;
+      const existing = await checkExisting.get(userId, row.name.toLowerCase(), row.dob_month, row.dob_day || null) as { id: string } | undefined;
 
       if (existing) {
         if (conflictStrategy === 'skip') {
           skipped++;
           continue;
         } else if (conflictStrategy === 'update') {
-          updateStmt.run(
+          await updateStmt.run(
             row.nickname || null,
             row.dob_year || null,
             row.gender || 'unspecified',
@@ -147,7 +147,7 @@ export function importContacts(
       }
 
       // Insert new
-      insertStmt.run(
+      await insertStmt.run(
         `cnt_${nanoid(10)}`,
         userId,
         row.name,
@@ -166,7 +166,6 @@ export function importContacts(
     }
   });
 
-  transaction();
   return { imported, updated, skipped };
 }
 

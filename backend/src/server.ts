@@ -25,7 +25,7 @@ const server = Fastify({
 
 async function main() {
   // Initialize Database
-  initDatabase();
+  await initDatabase();
 
   // Register Plugins
   await server.register(cors, {

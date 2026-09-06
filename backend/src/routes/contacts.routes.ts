@@ -12,7 +12,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized: Please sign in to view your contacts' });
     }
 
-    const contacts = db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId) as any[];
+    const contacts = await db.prepare('SELECT * FROM contacts WHERE user_id = ?').all(userId) as any[];
 
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -73,7 +73,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(
+    await stmt.run(
       id,
       userId,
       body.name.trim(),
@@ -91,7 +91,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       JSON.stringify(body.notify_days || [1, 3])
     );
 
-    const created = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
+    const created = await db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
     return { contact: created };
   });
 
@@ -123,7 +123,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       WHERE id = ? AND user_id = ?
     `);
 
-    stmt.run(
+    await stmt.run(
       body.name?.trim(),
       body.nickname?.trim() || null,
       body.dob_day || null,
@@ -141,7 +141,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       userId
     );
 
-    const updated = db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
+    const updated = await db.prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?').get(id, userId);
     return { contact: updated };
   });
 
@@ -153,7 +153,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
     }
 
     const { id } = req.params as { id: string };
-    db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
+    await db.prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?').run(id, userId);
     return { success: true, id };
   });
 
@@ -185,7 +185,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       return { success: false, error: 'No valid rows to import' };
     }
 
-    const result = importContacts(userId, rowsToImport, body.conflictStrategy || 'update');
+    const result = await importContacts(userId, rowsToImport, body.conflictStrategy || 'update');
     return { success: true, ...result };
   });
 }
