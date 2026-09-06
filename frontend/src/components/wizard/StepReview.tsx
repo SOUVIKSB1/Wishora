@@ -184,7 +184,7 @@ export const StepReview: React.FC<StepReviewProps> = ({
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
             <span className="text-xs text-text-3 font-mono uppercase">SAVE TO FOLDER</span>
             <select
-              value={formData.folder_id || 'fld_1'}
+              value={formData.folder_id || (folders[0]?.id || '')}
               onChange={(e) => onFolderChange(e.target.value)}
               className="bg-void border border-white/20 hover:border-gold rounded-xl px-3 py-1.5 text-xs text-text-1 focus:border-gold outline-none cursor-pointer font-medium"
             >

@@ -58,7 +58,7 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
     custom_music_url: initialData?.custom_music_url || '',
     music_trim_start: initialData?.music_trim_start || 0,
     music_trim_end: initialData?.music_trim_end || 30,
-    folder_id: initialData?.folder_id || 'fld_1',
+    folder_id: initialData?.folder_id || (folders && folders.length > 0 ? folders[0].id : ''),
     contact_id: initialData?.contact_id || null,
   });
 

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { db } from '../services/db.service.js';
+import { db, createDefaultUserFolders } from '../services/db.service.js';
 import { nanoid } from 'nanoid';
 import { extractUserId } from './auth.routes.js';
 
@@ -75,6 +75,16 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     const id = `wsh_${nanoid(10)}`;
     const slug = body.slug || nanoid(10).toLowerCase();
 
+    // Ensure user exists in users table to satisfy foreign key
+    const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    if (!userExists) {
+      db.prepare(`
+        INSERT OR IGNORE INTO users (id, email, display_name, plan)
+        VALUES (?, ?, ?, 'free')
+      `).run(userId, `${userId}@wishora.internal`, 'Director');
+      createDefaultUserFolders(userId);
+    }
+
     let contactId = body.contact_id || null;
     const recipientName = (body.recipient_name || 'Friend').trim();
 
@@ -110,13 +120,27 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       } catch (err) {
         console.warn('Auto-save contact skipped or failed:', err);
       }
+    } else if (contactId) {
+      const contactExists = db.prepare('SELECT id FROM contacts WHERE id = ?').get(contactId);
+      if (!contactExists) contactId = null;
     }
 
-    // Ensure default folder exists for user if folder_id is not provided
-    let folderId = body.folder_id;
+    // Ensure valid folder ID
+    let folderId = body.folder_id || null;
+    if (folderId) {
+      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ?').get(folderId);
+      if (!folderExists) folderId = null;
+    }
     if (!folderId) {
       const defaultFolder = db.prepare('SELECT id FROM folders WHERE user_id = ? LIMIT 1').get(userId) as any;
       folderId = defaultFolder ? defaultFolder.id : null;
+    }
+
+    // Ensure valid music ID
+    let musicId = body.music_id || 'trk_1';
+    const trackExists = db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
+    if (!trackExists) {
+      musicId = 'trk_1';
     }
 
     const insertWishTx = db.transaction(() => {
@@ -140,7 +164,7 @@ export async function wishesRoutes(fastify: FastifyInstance) {
         body.wish_text || '',
         body.wish_language || 'en',
         body.theme || 'auto',
-        body.music_id || 'trk_1',
+        musicId,
         body.custom_music_url || null,
         body.music_trim_start || 0,
         body.music_trim_end || 30,
@@ -177,6 +201,18 @@ export async function wishesRoutes(fastify: FastifyInstance) {
     const { id } = req.params as { id: string };
     const body = req.body as any;
 
+    let folderId = body.folder_id;
+    if (folderId) {
+      const folderExists = db.prepare('SELECT id FROM folders WHERE id = ?').get(folderId);
+      if (!folderExists) folderId = null;
+    }
+
+    let musicId = body.music_id;
+    if (musicId) {
+      const trackExists = db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(musicId);
+      if (!trackExists) musicId = 'trk_1';
+    }
+
     const updateWishTx = db.transaction(() => {
       const stmt = db.prepare(`
         UPDATE wishes SET
@@ -198,14 +234,14 @@ export async function wishesRoutes(fastify: FastifyInstance) {
       `);
 
       stmt.run(
-        body.folder_id,
+        folderId,
         body.recipient_name,
         body.recipient_dob,
         body.recipient_gender,
         body.wish_text,
         body.wish_language,
         body.theme,
-        body.music_id,
+        musicId,
         body.custom_music_url || null,
         body.music_trim_start,
         body.music_trim_end,

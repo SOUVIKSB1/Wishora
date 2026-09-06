@@ -134,7 +134,25 @@ export function initDatabase() {
     db.exec("ALTER TABLE users ADD COLUMN gender TEXT DEFAULT 'unspecified'");
   } catch (e) {}
   try {
+    db.exec("ALTER TABLE users ADD COLUMN user_dob TEXT DEFAULT '2000-01-01'");
+  } catch (e) {}
+  try {
     db.exec("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'");
+  } catch (e) {}
+  try {
+    db.exec("ALTER TABLE wishes ADD COLUMN custom_music_url TEXT");
+  } catch (e) {}
+  try {
+    db.exec("ALTER TABLE wishes ADD COLUMN recipient_gender TEXT DEFAULT 'unspecified'");
+  } catch (e) {}
+  try {
+    db.exec("ALTER TABLE wishes ADD COLUMN music_trim_start REAL DEFAULT 0");
+  } catch (e) {}
+  try {
+    db.exec("ALTER TABLE wishes ADD COLUMN music_trim_end REAL DEFAULT 30");
+  } catch (e) {}
+  try {
+    db.exec("ALTER TABLE wishes ADD COLUMN scheduled_for DATETIME");
   } catch (e) {}
   try {
     db.exec("ALTER TABLE reactions ADD COLUMN message_text TEXT");
