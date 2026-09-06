@@ -219,7 +219,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         {[
           {
             label: 'WISHES DIRECTED',
-            val: stats?.total_wishes || wishes.length,
+            val: stats?.total_wishes ?? wishes.length,
             icon: <Film size={18} className="text-amber-300" />,
             glow: 'from-amber-500/20 to-yellow-600/5',
             border: 'hover:border-amber-400/50',
@@ -227,7 +227,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           },
           {
             label: 'TIMES OPENED',
-            val: stats?.total_opens || 12,
+            val: stats?.total_opens ?? 0,
             icon: <Eye size={18} className="text-sky-300" />,
             glow: 'from-sky-500/20 to-blue-600/5',
             border: 'hover:border-sky-400/50',
@@ -235,7 +235,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           },
           {
             label: 'REACTIONS CAPTURED',
-            val: stats?.total_reactions || wishes.filter(w => !!w.reaction_url).length,
+            val: stats?.total_reactions ?? wishes.filter(w => !!w.reaction_url).length,
             icon: <Video size={18} className="text-pink-300" />,
             glow: 'from-pink-500/20 to-rose-600/5',
             border: 'hover:border-pink-400/50',
@@ -243,7 +243,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           },
           {
             label: 'SAVED BIRTHDAYS',
-            val: stats?.total_contacts || contacts.length,
+            val: stats?.total_contacts ?? contacts.length,
             icon: <Calendar size={18} className="text-emerald-300" />,
             glow: 'from-emerald-500/20 to-teal-600/5',
             border: 'hover:border-emerald-400/50',
