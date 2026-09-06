@@ -59,6 +59,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
 
   // Wish Template Create & Edit Modals
   const [showAddTemplateModal, setShowAddTemplateModal] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     title: '',
     content: '',
@@ -78,6 +79,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
 
   // Notifications Modal
   const [showSendNotifModal, setShowSendNotifModal] = useState(false);
+  const [isSendingNotif, setIsSendingNotif] = useState(false);
+  const [deletingNotifId, setDeletingNotifId] = useState<string | null>(null);
   const [targetUser, setTargetUser] = useState<any | null>(null);
   const [notifForm, setNotifForm] = useState({
     title: '',
@@ -85,8 +88,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
     type: 'announcement'
   });
 
-  // User Deletion Modal
+  // User Deletion & Role Toggle States
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<any | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
     setStatusMessage({ type, text });
@@ -129,24 +134,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
   // 1. User Management Actions
   const handleToggleUserRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    setTogglingUserId(userId);
     try {
       await api.updateUserRole(userId, newRole);
+      haptic.medium();
       showToast('success', `User role set to ${newRole.toUpperCase()}`);
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to change role');
+    } finally {
+      setTogglingUserId(null);
     }
   };
 
   const handleDeleteUserPermanently = async () => {
     if (!deleteConfirmUser) return;
+    setIsDeletingUser(true);
     try {
       await api.deleteUser(deleteConfirmUser.id);
+      haptic.impact();
       showToast('success', `User ${deleteConfirmUser.email} and all data permanently terminated`);
       setUsers(prev => prev.filter(u => u.id !== deleteConfirmUser.id));
       setDeleteConfirmUser(null);
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to delete user');
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -271,8 +284,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       showToast('error', 'Title and Content are required');
       return;
     }
+    setIsSavingTemplate(true);
     try {
       const res = await api.createAdminTemplate(newTemplate);
+      haptic.success();
       showToast('success', `Template "${newTemplate.title}" added`);
       setTemplates(prev => [res.template, ...prev]);
       setShowAddTemplateModal(false);
@@ -285,6 +300,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       });
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to create template');
+    } finally {
+      setIsSavingTemplate(false);
     }
   };
 
@@ -302,13 +319,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
   const handleSaveEditTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTemplate) return;
+    setIsSavingTemplate(true);
     try {
       const res = await api.updateAdminTemplate(editingTemplate.id, editTemplateForm);
+      haptic.success();
       showToast('success', `Template updated successfully`);
       setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? res.template : t));
       setEditingTemplate(null);
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to update template');
+    } finally {
+      setIsSavingTemplate(false);
     }
   };
 
@@ -334,6 +355,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       showToast('error', 'Title and message are required');
       return;
     }
+    setIsSendingNotif(true);
     try {
       const res = await api.sendAdminNotification({
         title: notifForm.title,
@@ -341,6 +363,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
         type: notifForm.type,
         user_id: targetUser ? targetUser.id : null
       });
+      haptic.celebrate();
       showToast('success', `Notification sent (${res.recipient_type})`);
       setNotifications(prev => [res.notification, ...prev]);
       setShowSendNotifModal(false);
@@ -348,16 +371,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       setNotifForm({ title: '', message: '', type: 'announcement' });
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to broadcast notification');
+    } finally {
+      setIsSendingNotif(false);
     }
   };
 
   const handleDeleteNotification = async (id: string) => {
+    setDeletingNotifId(id);
     try {
       await api.deleteAdminNotification(id);
+      haptic.medium();
       showToast('success', 'Announcement removed');
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to delete notification');
+    } finally {
+      setDeletingNotifId(null);
     }
   };
 
@@ -532,8 +561,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
             </div>
           </div>
 
-          {/* User Table */}
-          <div className="bg-surface-elevated/80 border border-white/[0.1] rounded-3xl overflow-hidden shadow-glass-card">
+          {/* Desktop User Table (md and up) */}
+          <div className="hidden md:block bg-surface-elevated/80 border border-white/[0.1] rounded-3xl overflow-hidden shadow-glass-card">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -574,13 +603,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                       <td className="py-3.5 px-3">
                         <button
                           onClick={() => handleToggleUserRole(u.id, u.role)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer ${
+                          disabled={togglingUserId === u.id}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 ${
                             u.role === 'admin'
                               ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.2)]'
                               : 'bg-white/[0.05] text-text-3 border-white/[0.1] hover:text-white'
                           }`}
                         >
-                          {u.role === 'admin' ? '🛡️ ADMIN' : '👤 USER'}
+                          {togglingUserId === u.id ? (
+                            <Loader2 size={11} className="animate-spin text-amber-400" />
+                          ) : null}
+                          <span>{u.role === 'admin' ? '🛡️ ADMIN' : '👤 USER'}</span>
                         </button>
                       </td>
 
@@ -605,14 +638,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                           <button
                             onClick={() => { setTargetUser(u); setShowSendNotifModal(true); }}
                             title="Send Direct Message to User"
-                            className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition-all cursor-pointer active:scale-95"
                           >
                             <Send size={13} />
                           </button>
                           <button
                             onClick={() => setDeleteConfirmUser(u)}
                             title="Permanently Terminate User & Data"
-                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all cursor-pointer active:scale-95"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -630,6 +663,91 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile User Cards (sm and below) */}
+          <div className="block md:hidden space-y-3">
+            {filteredUsers.map(u => (
+              <div key={u.id} className="p-4 rounded-2xl bg-surface-elevated/80 border border-white/[0.1] space-y-3 shadow-glass-card">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`}
+                      alt={u.display_name}
+                      className="w-10 h-10 rounded-xl object-cover border border-white/[0.1] bg-surface flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-sm truncate flex items-center gap-1.5">
+                        <span>{u.display_name || 'Anonymous'}</span>
+                        {u.role === 'admin' && (
+                          <span className="px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 text-[9px] font-mono font-bold border border-amber-400/30">
+                            ADMIN
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-mono text-text-3 truncate">{u.email}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleToggleUserRole(u.id, u.role)}
+                    disabled={togglingUserId === u.id}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer flex-shrink-0 inline-flex items-center gap-1 ${
+                      u.role === 'admin'
+                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                        : 'bg-white/[0.05] text-text-3 border-white/[0.1]'
+                    }`}
+                  >
+                    {togglingUserId === u.id ? <Loader2 size={10} className="animate-spin text-amber-400" /> : null}
+                    <span>{u.role === 'admin' ? 'ADMIN' : 'USER'}</span>
+                  </button>
+                </div>
+
+                {/* Mobile Metrics Row */}
+                <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-void/50 rounded-xl border border-white/[0.06] text-center">
+                  <div>
+                    <span className="text-[9px] font-mono text-text-3 uppercase block">Wishes</span>
+                    <span className="text-xs font-mono font-bold text-amber-300">{u.wish_count || 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-mono text-text-3 uppercase block">Contacts</span>
+                    <span className="text-xs font-mono font-bold text-sky-300">{u.contact_count || 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-mono text-text-3 uppercase block">Reactions</span>
+                    <span className="text-xs font-mono font-bold text-pink-300">{u.reaction_count || 0}</span>
+                  </div>
+                </div>
+
+                {/* Mobile Action Buttons */}
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.06]">
+                  <span className="text-[10px] font-mono text-text-3">
+                    Joined: {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setTargetUser(u); setShowSendNotifModal(true); }}
+                      className="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center gap-1 transition-all active:scale-95"
+                    >
+                      <Send size={12} />
+                      <span>Message</span>
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmUser(u)}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all active:scale-95"
+                      title="Terminate User"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-8 text-text-3 font-mono text-xs border border-dashed border-white/[0.1] rounded-2xl">
+                No users found matching your search.
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -671,16 +789,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                   </div>
                   <button
                     onClick={() => handleDeleteNotification(n.id)}
-                    className="p-1 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    disabled={deletingNotifId === n.id}
+                    className="p-1.5 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Trash2 size={14} />
+                    {deletingNotifId === n.id ? <Loader2 size={13} className="animate-spin text-rose-400" /> : <Trash2 size={14} />}
                   </button>
                 </div>
                 <p className="text-xs text-text-2 leading-relaxed whitespace-pre-wrap">{n.message}</p>
               </div>
             ))}
             {notifications.length === 0 && (
-              <div className="col-span-2 text-center py-12 border border-dashed border-white/[0.1] rounded-3xl p-6">
+              <div className="col-span-1 md:col-span-2 text-center py-12 border border-dashed border-white/[0.1] rounded-3xl p-6">
                 <Bell size={28} className="mx-auto text-text-3 mb-2" />
                 <p className="text-xs text-text-2">No announcements sent yet. Broadcast updates or message users directly.</p>
               </div>
@@ -726,9 +845,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
 
                   <button
                     onClick={() => handleDeleteMusic(t.id, t.title)}
-                    className="p-1 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    disabled={deletingMusicId === t.id}
+                    className="p-1.5 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Trash2 size={14} />
+                    {deletingMusicId === t.id ? <Loader2 size={14} className="animate-spin text-rose-400" /> : <Trash2 size={14} />}
                   </button>
                 </div>
 
@@ -783,10 +903,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(tpl.id, tpl.title)}
+                      disabled={deletingTemplateId === tpl.id}
                       title="Delete Template"
-                      className="p-1.5 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-text-3 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      <Trash2 size={13} />
+                      {deletingTemplateId === tpl.id ? <Loader2 size={13} className="animate-spin text-rose-400" /> : <Trash2 size={13} />}
                     </button>
                   </div>
                 </div>
@@ -801,7 +922,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       {/* ─── MODAL 1: PROPER SONG UPLOAD TOOL (NO RAW URL) ─── */}
       {showAddMusicModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/90 backdrop-blur-xl">
-          <div className="relative w-full max-w-lg bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 animate-scaleIn">
+          <div className="relative w-full max-w-lg bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Music2 size={20} className="text-amber-400" />
@@ -977,6 +1098,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                     type="submit" 
                     variant="glow" 
                     size="md"
+                    isLoading={isPublishingMusic}
                     disabled={!newMusic.storage_url || isReadingAudio}
                   >
                     <Upload size={14} />
@@ -992,7 +1114,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       {/* ─── MODAL 2: CREATE TEMPLATE ─── */}
       {showAddTemplateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
-          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <FileText size={18} className="text-amber-400" />
@@ -1068,7 +1190,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 >
                   Cancel
                 </button>
-                <VelvetButton type="submit" variant="glow" size="sm">
+                <VelvetButton type="submit" variant="glow" size="sm" isLoading={isSavingTemplate}>
                   Save Template
                 </VelvetButton>
               </div>
@@ -1080,7 +1202,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       {/* ─── MODAL 3: EDIT TEMPLATE ─── */}
       {editingTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
-          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Pencil size={18} className="text-amber-400" />
@@ -1154,7 +1276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 >
                   Cancel
                 </button>
-                <VelvetButton type="submit" variant="glow" size="sm">
+                <VelvetButton type="submit" variant="glow" size="sm" isLoading={isSavingTemplate}>
                   Save Changes
                 </VelvetButton>
               </div>
@@ -1166,7 +1288,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       {/* ─── MODAL 4: SEND NOTIFICATION (BULK OR DIRECT) ─── */}
       {showSendNotifModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/85 backdrop-blur-xl">
-          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+          <div className="relative w-full max-w-md bg-surface-elevated border border-white/[0.15] rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Send size={18} className="text-amber-400" />
@@ -1228,7 +1350,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                 >
                   Cancel
                 </button>
-                <VelvetButton type="submit" variant="glow" size="sm">
+                <VelvetButton type="submit" variant="glow" size="sm" isLoading={isSendingNotif}>
                   {targetUser ? 'Send Direct Message' : 'Send Broadcast'}
                 </VelvetButton>
               </div>
@@ -1240,7 +1362,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
       {/* ─── MODAL 5: PERMANENT TERMINATE USER CONFIRMATION ─── */}
       {deleteConfirmUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/90 backdrop-blur-xl">
-          <div className="relative w-full max-w-md bg-surface-elevated border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+          <div className="relative w-full max-w-md bg-surface-elevated border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center mx-auto">
               <ShieldAlert size={24} />
             </div>
@@ -1264,16 +1386,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
               <button
                 type="button"
                 onClick={() => setDeleteConfirmUser(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-text-2 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] transition-colors cursor-pointer"
+                disabled={isDeletingUser}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-text-2 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Keep Account
               </button>
               <button
                 type="button"
                 onClick={handleDeleteUserPermanently}
-                className="px-5 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-[0_0_25px_rgba(244,63,94,0.4)] transition-all cursor-pointer"
+                disabled={isDeletingUser}
+                className="px-5 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-[0_0_25px_rgba(244,63,94,0.4)] transition-all cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
               >
-                Yes, Terminate Permanently
+                {isDeletingUser ? <Loader2 size={14} className="animate-spin text-white" /> : null}
+                <span>{isDeletingUser ? 'Terminating...' : 'Yes, Terminate Permanently'}</span>
               </button>
             </div>
           </div>

@@ -7,22 +7,58 @@ export function parseContactsCsv(csvContent) {
         skipEmptyLines: true,
         transformHeader: (h) => h.trim().toLowerCase()
     });
-    const recognizedHeaders = ['name', 'fullname', 'full_name', 'dob', 'birthday', 'date_of_birth', 'gender', 'sex', 'nickname', 'email', 'phone', 'relationship', 'note', 'notes'];
     const rows = parsed.data.map((raw) => {
-        // Find name
-        const name = raw['name'] || raw['fullname'] || raw['full_name'] || raw['contact_name'] || '';
-        const nickname = raw['nickname'] || '';
-        const dobRaw = raw['dob'] || raw['birthday'] || raw['date_of_birth'] || '';
-        const genderRaw = (raw['gender'] || raw['sex'] || 'unspecified').toLowerCase();
-        const email = raw['email'] || '';
-        const phone = raw['phone'] || raw['mobile'] || '';
-        const relationship = raw['relationship'] || raw['relation'] || 'Friend';
-        const note = raw['note'] || raw['notes'] || '';
-        // Collect extra headers
+        // Find name from known variations
+        let name = '';
+        let email = '';
+        let phone = '';
+        let dobRaw = '';
+        let genderRaw = 'unspecified';
+        let relationship = 'Friend';
+        let nickname = '';
+        let note = '';
         const extra_fields = {};
         for (const [key, val] of Object.entries(raw)) {
-            if (!recognizedHeaders.includes(key) && val) {
-                extra_fields[key] = val;
+            if (!val || typeof val !== 'string')
+                continue;
+            const cleanVal = val.trim();
+            if (!cleanVal)
+                continue;
+            const normKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (['name', 'fullname', 'contactname', 'person', 'recipient', 'contact'].includes(normKey)) {
+                name = cleanVal;
+            }
+            else if (['email', 'username', 'emailaddress', 'useremail', 'mail'].includes(normKey)) {
+                if (cleanVal.includes('@')) {
+                    email = cleanVal;
+                }
+                else if (!name) {
+                    name = cleanVal;
+                }
+            }
+            else if (['dob', 'birthday', 'dateofbirth', 'birthdate', 'bday'].includes(normKey)) {
+                dobRaw = cleanVal;
+            }
+            else if (['phone', 'mobile', 'whatsapp', 'whatsappno', 'whatsappnumber', 'contactno', 'phonenumber', 'cell'].includes(normKey)) {
+                phone = cleanVal;
+            }
+            else if (['gender', 'sex'].includes(normKey)) {
+                genderRaw = cleanVal.toLowerCase();
+            }
+            else if (['relationship', 'relation', 'category'].includes(normKey)) {
+                relationship = cleanVal;
+            }
+            else if (['nickname', 'alias', 'petname'].includes(normKey)) {
+                nickname = cleanVal;
+            }
+            else if (['note', 'notes', 'comments', 'comment'].includes(normKey)) {
+                note = cleanVal;
+            }
+            else if (normKey.includes('reminder') || normKey.includes('agree') || normKey.includes('update')) {
+                extra_fields['reminder_preference'] = cleanVal;
+            }
+            else if (normKey !== 'timestamp') {
+                extra_fields[key] = cleanVal;
             }
         }
         if (!name.trim()) {

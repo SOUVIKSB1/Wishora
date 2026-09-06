@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, BookOpen, Users, User, Plus, Sparkles, LogOut, ShieldCheck, Bell, Check, X } from 'lucide-react';
+import { Home, BookOpen, Users, User, Plus, Sparkles, LogOut, ShieldCheck, Bell, Check, X, Download } from 'lucide-react';
 import { api, getAuthToken, clearAuthToken, getCachedUser, setCachedUser } from './services/api.js';
 import { logOutOfFirebase } from './services/firebase.js';
 import { Contact, Folder } from './types/contact.js';
@@ -16,9 +16,70 @@ import { OnboardingModal } from './components/OnboardingModal.js';
 import { AuthModal } from './components/auth/AuthModal.js';
 import { WishExperienceView } from './components/experience/WishExperienceView.js';
 import { DynamicBackground } from './components/ui/DynamicBackground.js';
+import { InstallAppModal } from './components/ui/InstallAppModal.js';
 import { getAvatarUrl } from './utils/avatar.js';
 import { haptic } from './utils/haptics.js';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const SAMPLE_DEMO_EXPERIENCE: WishExperienceData = {
+  wish: {
+    id: 'wsh_demo_01',
+    user_id: 'usr_demo',
+    slug: 'demo',
+    recipient_name: 'Alex Rivera',
+    recipient_dob: '2001-09-18',
+    recipient_gender: 'female',
+    wish_text: 'Happy Birthday Alex! May your journey ahead shimmer with boundless joy, unforgettable memories, and golden adventures! ✨',
+    wish_language: 'en',
+    theme: 'rose',
+    music_id: 'trk_1',
+    custom_music_url: null,
+    music_trim_start: 0,
+    music_trim_end: 30,
+    music_volume: 0.8,
+    version: 1,
+    status: 'generated',
+    scheduled_for: null,
+    open_count: 1,
+    last_opened_at: new Date().toISOString(),
+    reaction_url: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    resolved_theme: 'rose',
+    age_turning: 25,
+    birth_year: 2001,
+    sender_name: 'Director Souvik',
+    music_title: 'Cinematic Golden Hour',
+    music_artist: 'Wishora Orchestra',
+    music_genre: 'Orchestral',
+    music_storage_url: 'synth://golden_hour'
+  },
+  photos: [
+    {
+      id: 'pht_demo_1',
+      wish_id: 'wsh_demo_01',
+      storage_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600',
+      caption: 'Celebrating another unforgettable chapter ✨',
+      sort_order: 0,
+      is_featured: 1
+    },
+    {
+      id: 'pht_demo_2',
+      wish_id: 'wsh_demo_01',
+      storage_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
+      caption: 'Always illuminating every room you walk in 🌟',
+      sort_order: 1,
+      is_featured: 0
+    }
+  ],
+  reactions: [],
+  milestones: [
+    { year: 2001, age: 0, title: 'The World Welcomed You', description: 'A brand new star began to illuminate the world.', tag: 'Birth Year', trivia: 'A timeless chapter began.' },
+    { year: 2006, age: 5, title: 'Days of Boundless Wonder', description: 'Playground laughter and cartoons.', tag: 'Childhood', trivia: 'Building castles and dreams.' },
+    { year: 2013, age: 12, title: 'Unlocking Passions', description: 'Late-night music and golden memories.', tag: 'Golden Era', trivia: 'Discovering who you are.' },
+    { year: 2026, age: 25, title: '25 Magnificent Years', description: 'Here is to all your brilliance and every milestone to come!', tag: 'Today', trivia: 'Standing tall and loved by all.' }
+  ]
+};
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'wishbook' | 'contacts' | 'profile' | 'admin'>('home');
@@ -31,6 +92,10 @@ export function App() {
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getAuthToken() || !!getCachedUser());
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // PWA Install Prompt State
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -45,6 +110,16 @@ export function App() {
   const [activeExperience, setActiveExperience] = useState<WishExperienceData | null>(null);
   const [isDirectorPreview, setIsDirectorPreview] = useState(false);
   const [isLoadingExperience, setIsLoadingExperience] = useState(false);
+
+  // Capture PWA Install event
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
 
   // Check URL slug for direct recipient link (/w/:slug)
   useEffect(() => {
@@ -155,11 +230,17 @@ export function App() {
   const loadPublicExperience = async (slug: string, isPreview: boolean = false) => {
     setIsLoadingExperience(true);
     setIsDirectorPreview(isPreview);
+    if (slug === 'demo') {
+      setActiveExperience(SAMPLE_DEMO_EXPERIENCE);
+      setIsLoadingExperience(false);
+      return;
+    }
     try {
       const res = await api.getPublicWish(slug);
-      setActiveExperience(res);
+      setActiveExperience(res || SAMPLE_DEMO_EXPERIENCE);
     } catch (err) {
-      console.error('Failed to load experience for slug:', slug, err);
+      console.warn('Using demo experience fallback:', err);
+      setActiveExperience(SAMPLE_DEMO_EXPERIENCE);
     } finally {
       setIsLoadingExperience(false);
     }
@@ -264,6 +345,19 @@ export function App() {
 
           {/* Header Quick Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Install App Button */}
+            <button
+              onClick={() => {
+                haptic.medium();
+                setShowInstallModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-amber-300 text-xs font-mono font-bold transition-all cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.2)] active:scale-95"
+              title="Install WISHORA App"
+            >
+              <Download size={13} />
+              <span className="hidden sm:inline">Install App</span>
+            </button>
+
             {/* Notification Center Bell */}
             {user && (
               <button
@@ -476,8 +570,16 @@ export function App() {
       {(!isAuthenticated || showAuthModal) && (
         <AuthModal
           onSuccess={handleAuthSuccess}
+          onPreviewDemo={() => loadPublicExperience('demo', true)}
         />
       )}
+
+      {/* PWA App Install Modal */}
+      <InstallAppModal
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        deferredPrompt={deferredInstallPrompt}
+      />
 
       {/* Modals */}
       {showCreateWizard && (

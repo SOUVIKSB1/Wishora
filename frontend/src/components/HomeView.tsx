@@ -7,6 +7,7 @@ import { GlowBadge } from './ui/GlowBadge.js';
 import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
 import confetti from 'canvas-confetti';
 import { getAvatarUrl } from '../utils/avatar.js';
+import { getDirectorId } from '../utils/director.js';
 import { haptic } from '../utils/haptics.js';
 import { motion } from 'framer-motion';
 
@@ -151,9 +152,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2 min-w-0 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-xs font-mono text-amber-300">
-              <Sparkles size={13} className="text-amber-400 animate-spin-slow" />
-              <span>{getGreeting()}, {firstName} ✨</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-xs font-mono text-amber-300">
+                <Sparkles size={13} className="text-amber-400 animate-spin-slow" />
+                <span>{getGreeting()}, {firstName} ✨</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-[11px] font-mono font-bold text-amber-300">
+                <span>{getDirectorId(user)}</span>
+              </div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-white tracking-tight leading-tight">

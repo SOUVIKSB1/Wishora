@@ -83,63 +83,63 @@ export const DynamicBackground: React.FC = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {/* Dynamic flowing chromatic aura orbs */}
+      {/* Dynamic flowing chromatic aura orbs - deep luxury velvet palette */}
       <motion.div
         animate={{
-          scale: [1, 1.25, 0.95, 1.15, 1],
-          x: [0, 40, -30, 20, 0],
-          y: [0, -35, 25, -20, 0],
+          scale: [1, 1.2, 0.95, 1.1, 1],
+          x: [0, 30, -20, 15, 0],
+          y: [0, -25, 20, -15, 0],
           rotate: [0, 90, 180, 270, 360]
         }}
         transition={{
-          duration: 22,
+          duration: 26,
           repeat: Infinity,
           ease: 'easeInOut'
         }}
-        className="absolute -top-[15%] -left-[10%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-br from-purple-600/25 via-pink-500/20 to-transparent blur-[80px]"
+        className="absolute -top-[15%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-purple-900/18 via-pink-900/12 to-transparent blur-[100px]"
       />
 
       <motion.div
         animate={{
-          scale: [1, 1.2, 1, 1.1, 1],
-          x: [0, -50, 30, -20, 0],
-          y: [0, 40, -30, 25, 0],
+          scale: [1, 1.15, 1, 1.08, 1],
+          x: [0, -35, 25, -15, 0],
+          y: [0, 30, -20, 15, 0],
           rotate: [360, 270, 180, 90, 0]
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: 'easeInOut'
-        }}
-        className="absolute -top-[10%] -right-[15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-bl from-amber-400/25 via-rose-500/20 to-transparent blur-[85px]"
-      />
-
-      <motion.div
-        animate={{
-          scale: [0.9, 1.15, 1, 1.2, 0.9],
-          x: [0, 45, -35, 15, 0],
-          y: [0, -25, 35, -15, 0]
         }}
         transition={{
           duration: 28,
           repeat: Infinity,
           ease: 'easeInOut'
         }}
-        className="absolute top-[40%] left-[20%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-tr from-cyan-500/20 via-blue-600/15 to-emerald-500/15 blur-[95px]"
+        className="absolute -top-[10%] -right-[15%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-bl from-amber-600/18 via-yellow-900/10 to-transparent blur-[100px]"
       />
 
       <motion.div
         animate={{
-          scale: [1.1, 0.95, 1.2, 1, 1.1],
-          x: [0, -30, 40, -20, 0],
-          y: [0, 30, -35, 20, 0]
+          scale: [0.95, 1.1, 1, 1.15, 0.95],
+          x: [0, 30, -25, 10, 0],
+          y: [0, -20, 25, -10, 0]
         }}
         transition={{
-          duration: 24,
+          duration: 32,
           repeat: Infinity,
           ease: 'easeInOut'
         }}
-        className="absolute -bottom-[15%] right-[10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-tl from-emerald-400/20 via-teal-500/18 via-amber-400/15 to-transparent blur-[85px]"
+        className="absolute top-[40%] left-[20%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-tr from-cyan-950/15 via-blue-950/12 to-emerald-950/10 blur-[110px]"
+      />
+
+      <motion.div
+        animate={{
+          scale: [1.05, 0.95, 1.15, 1, 1.05],
+          x: [0, -25, 30, -15, 0],
+          y: [0, 25, -25, 15, 0]
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }}
+        className="absolute -bottom-[15%] right-[10%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-tl from-emerald-950/15 via-teal-950/12 via-amber-950/10 to-transparent blur-[100px]"
       />
 
       {/* Twinkling ambient particle canvas */}

@@ -181,20 +181,42 @@ export const ViralPromoScreen: React.FC<ViralPromoScreenProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 pt-6">
+          <div className="flex flex-col gap-2 pt-6">
             <button
-              onClick={() => showToast('WISHORA App Store link coming soon!')}
-              className="flex-1 py-2.5 px-3 rounded-[12px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] text-text-1 font-body font-semibold text-xs transition-colors flex items-center justify-center gap-1"
+              onClick={() => {
+                const blob = new Blob([
+                  `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=${window.location.origin}"><title>WISHORA</title></head><body><script>window.location.href="${window.location.origin}";</script></body></html>`
+                ], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'WISHORA-App.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('✨ WISHORA Chrome App Shortcut Downloaded!');
+              }}
+              className="w-full py-2.5 px-3 rounded-[12px] bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-amber-300 font-body font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.2)]"
             >
-              <span>🍎 App Store</span>
+              <span>⚡ Download Chrome Web App</span>
             </button>
 
-            <button
-              onClick={() => showToast('WISHORA Google Play link coming soon!')}
-              className="flex-1 py-2.5 px-3 rounded-[12px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] text-text-1 font-body font-semibold text-xs transition-colors flex items-center justify-center gap-1"
-            >
-              <span>▶ Google Play</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => showToast('🍎 On Safari: Tap Share 📤 then "Add to Home Screen"')}
+                className="flex-1 py-2 px-2.5 rounded-[12px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] text-text-1 font-body font-semibold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>🍎 iOS App</span>
+              </button>
+
+              <button
+                onClick={() => showToast('▶ On Chrome: Tap Menu (⋮) then "Install App"')}
+                className="flex-1 py-2 px-2.5 rounded-[12px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] text-text-1 font-body font-semibold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>▶ Android App</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

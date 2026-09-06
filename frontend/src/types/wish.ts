@@ -49,6 +49,9 @@ export interface Wish {
   birth_year?: number;
   sender_name?: string;
   sender_avatar?: string;
+  music_artist?: string;
+  music_genre?: string;
+  music_storage_url?: string;
 }
 
 export interface WishVersion {
@@ -69,6 +72,8 @@ export interface Milestone {
   age: number;
   title: string;
   description: string;
+  tag?: string;
+  trivia?: string;
 }
 
 export interface MusicTrack {

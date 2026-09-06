@@ -6,6 +6,7 @@ import { WheelDatePicker } from './ui/WheelDatePicker.js';
 import { AuraHalfCircle } from './ui/AuraHalfCircle.js';
 import { api } from '../services/api.js';
 import { LUXURY_AVATAR_PRESETS, getAvatarUrl, readFileAsDataUrl } from '../utils/avatar.js';
+import { getDirectorId } from '../utils/director.js';
 
 interface ProfileViewProps {
   user: any;
@@ -147,7 +148,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, stats, onUpdate,
 
           <div className="bg-white/[0.04] border border-white/[0.1] rounded-2xl p-3 flex sm:flex-col items-center sm:items-end justify-between gap-1">
             <span className="text-[10px] font-mono text-text-3 uppercase font-bold">DIRECTOR ID</span>
-            <span className="text-xs font-mono text-amber-300 font-extrabold tracking-wider">#WSH-88219</span>
+            <span className="text-xs font-mono text-amber-300 font-extrabold tracking-wider">{getDirectorId(user)}</span>
           </div>
         </div>
 

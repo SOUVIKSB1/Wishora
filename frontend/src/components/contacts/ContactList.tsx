@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Contact } from '../../types/contact.js';
-import { Plus, UploadCloud, Search, Sparkles, Calendar, Heart, MoreVertical, Trash2, Edit, UserCheck, Shield } from 'lucide-react';
+import { Plus, UploadCloud, Search, Sparkles, Calendar, Heart, MoreVertical, Trash2, Edit, UserCheck, Shield, Download } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { GlowBadge } from '../ui/GlowBadge.js';
 import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { LUXURY_AVATAR_PRESETS, getAvatarUrl } from '../../utils/avatar.js';
+import { downloadContactsCsv } from '../../utils/downloader.js';
 
 interface ContactListProps {
   contacts: Contact[];
@@ -64,6 +65,20 @@ export const ContactList: React.FC<ContactListProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5">
+          {contacts.length > 0 && (
+            <VelvetButton
+              variant="secondary"
+              size="sm"
+              icon={<Download size={14} />}
+              onClick={() => {
+                downloadContactsCsv(contacts);
+              }}
+              title="Download full contacts list as CSV"
+            >
+              Export CSV
+            </VelvetButton>
+          )}
+
           <VelvetButton
             variant="secondary"
             size="sm"

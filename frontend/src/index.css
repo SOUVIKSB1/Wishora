@@ -4,18 +4,18 @@
 
 :root {
   color-scheme: dark;
-  --void: #050508;
-  --void-elevated: #0B0B12;
-  --surface: #0F0F1A;
-  --surface-hover: #161626;
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-gold: rgba(212, 175, 55, 0.35);
+  --void: #020204;
+  --void-elevated: #06060A;
+  --surface: #090910;
+  --surface-hover: #0F0F1A;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-gold: rgba(212, 175, 55, 0.3);
   --gold: #D4AF37;
   --gold-light: #F7E7B4;
   --gold-dim: #8A6E42;
-  --gold-glow: rgba(212, 175, 55, 0.28);
-  --gold-pulse: rgba(212, 175, 55, 0.08);
+  --gold-glow: rgba(212, 175, 55, 0.22);
+  --gold-pulse: rgba(212, 175, 55, 0.06);
   --text-1: #F4F1EB;
   --text-2: #8E8CA2;
   --text-3: #4A4860;

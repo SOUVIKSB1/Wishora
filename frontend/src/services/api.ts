@@ -122,6 +122,8 @@ export const api = {
   deleteContact: (id: string) => fetchApi<{ success: boolean; id: string }>(`/contacts/${id}`, { method: 'DELETE' }),
   importContacts: (data: { rows?: any[]; csvContent?: string; conflictStrategy?: string }) => 
     fetchApi<{ success: boolean; imported: number; updated: number; skipped: number }>('/contacts/import', { method: 'POST', body: JSON.stringify(data) }),
+  previewContactsCsv: (csvContent: string) =>
+    fetchApi<{ rows: any[]; errors: any[]; total_parsed: number }>('/contacts/csv-preview', { method: 'POST', body: JSON.stringify({ csvContent }) }),
 
   // Wishes
   getWishes: (params?: { folder_id?: string; status?: string }) => {

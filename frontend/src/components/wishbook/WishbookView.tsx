@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Wish } from '../../types/wish.js';
 import { Folder } from '../../types/contact.js';
-import { Folder as FolderIcon, Sparkles, Clock, Video, Eye, Plus, Trash2, ExternalLink, Play, Pause, MessageSquare, X, ArrowLeft, Mic, Share2, Heart, Check, Edit3, ChevronDown, CheckCircle2, Layers, Calendar, History, Send, MessageCircle, RotateCcw, Loader2 } from 'lucide-react';
+import { Folder as FolderIcon, Sparkles, Clock, Video, Eye, Plus, Trash2, ExternalLink, Play, Pause, MessageSquare, X, ArrowLeft, Mic, Share2, Heart, Check, Edit3, ChevronDown, CheckCircle2, Layers, Calendar, History, Send, MessageCircle, RotateCcw, Loader2, Download } from 'lucide-react';
 import { VelvetButton } from '../ui/VelvetButton.js';
 import { GlowBadge } from '../ui/GlowBadge.js';
 import { AuraHalfCircle } from '../ui/AuraHalfCircle.js';
 import { getAvatarUrl } from '../../utils/avatar.js';
 import { api } from '../../services/api.js';
+import { downloadWishKeepsake } from '../../utils/downloader.js';
 
 interface WishbookViewProps {
   wishes: Wish[];
@@ -473,6 +474,15 @@ export const WishbookView: React.FC<WishbookViewProps> = ({
                           </span>
 
                           <div className="flex items-center gap-2">
+                            {/* Download Keepsake Button */}
+                            <button
+                              onClick={() => downloadWishKeepsake(w)}
+                              className="p-2 text-white/70 hover:text-amber-300 rounded-xl bg-white/[0.08] hover:bg-amber-400/15 border border-white/[0.12] transition-colors cursor-pointer"
+                              title="Download Wish Experience Keepsake"
+                            >
+                              <Download size={14} />
+                            </button>
+
                             {/* Edit Creation Button */}
                             <button
                               onClick={() => onSelectWish(w)}
