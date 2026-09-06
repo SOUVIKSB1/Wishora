@@ -193,7 +193,12 @@ export const CreateWishModal: React.FC<CreateWishModalProps> = ({ onClose, onSuc
     if (isPlaying) {
       stop();
     } else {
-      playSynthTheme(storageUrl || 'synth://golden_hour');
+      playSynthTheme(
+        storageUrl || 'synth://golden_hour',
+        formData.music_volume ?? 0.8,
+        formData.music_trim_start ?? 0,
+        formData.music_trim_end
+      );
     }
   };
 

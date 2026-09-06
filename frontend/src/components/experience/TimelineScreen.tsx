@@ -466,12 +466,17 @@ export const TimelineScreen: React.FC<TimelineScreenProps> = ({
                 {/* Top Visited Indian City with Real Photo */}
                 {eventData.topIndianCity && (
                   <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 flex items-center gap-3">
-                    <img
-                      src={eventData.topIndianCity.imageUrl}
-                      alt={eventData.topIndianCity.name}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-white/10 flex-shrink-0 shadow-sm"
-                      loading="lazy"
-                    />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-surface-elevated relative">
+                      <img
+                        src={eventData.topIndianCity.imageUrl}
+                        alt={eventData.topIndianCity.name}
+                        className="w-full h-full object-cover shadow-sm"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&auto=format&fit=crop&q=80";
+                        }}
+                      />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1 text-[9px] font-mono font-bold text-accent uppercase tracking-wider">
                         <span>🏛️ Trending Destination</span>

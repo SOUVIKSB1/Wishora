@@ -178,7 +178,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-void text-text-1 flex flex-col justify-between selection:bg-accent selection:text-void relative overflow-x-hidden">
+    <div className="min-h-screen bg-void text-text-1 flex flex-col selection:bg-accent selection:text-void relative overflow-x-hidden">
       {/* Ambient Particle Field in Background */}
       <ParticleField density={30} colors={['#C8A96E', '#FFF1D0', '#7C3AED']} />
 
@@ -239,9 +239,9 @@ export function App() {
       </header>
 
       {/* Main App Container */}
-      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 mb-24">
+      <div className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 mb-24">
         {/* Tab Pages */}
-        <main>
+        <main className="w-full">
           {activeTab === 'home' && (
             <HomeView
               user={user}

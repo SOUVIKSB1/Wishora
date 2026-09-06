@@ -77,6 +77,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const email = body.email.trim().toLowerCase();
     const googleId = body.google_id || body.uid || null;
     let user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ? OR (google_id IS NOT NULL AND google_id = ?)').get(email, googleId) as any;
+    let isNewUser = false;
 
     if (user) {
       // Update google_id and photo if missing
@@ -98,6 +99,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       );
       user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, plan, created_at FROM users WHERE id = ?').get(user.id);
     } else {
+      isNewUser = true;
       const userId = `usr_${nanoid(10)}`;
       db.prepare(`
         INSERT INTO users (id, email, display_name, avatar_url, gender, user_dob, google_id, auth_provider, plan)
@@ -112,10 +114,20 @@ export async function authRoutes(fastify: FastifyInstance) {
         googleId
       );
       createDefaultUserFolders(userId);
+
+      // Auto-claim any wishes, contacts, folders created under default master session
+      try {
+        db.prepare('UPDATE wishes SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
+        db.prepare('UPDATE contacts SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
+        db.prepare('UPDATE wish_folders SET user_id = ? WHERE user_id = ?').run(userId, 'usr_default_master');
+      } catch (e) {
+        console.warn('Could not migrate default master records:', e);
+      }
+
       user = db.prepare('SELECT id, email, display_name, avatar_url, gender, user_dob, plan, created_at FROM users WHERE id = ?').get(userId);
     }
 
-    return { user, token: user.id };
+    return { user, token: user.id, is_new_user: isNewUser };
   });
 
   // Get current user profile & isolated dashboard stats

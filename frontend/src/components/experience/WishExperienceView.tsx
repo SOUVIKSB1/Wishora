@@ -39,7 +39,12 @@ export const WishExperienceView: React.FC<WishExperienceViewProps> = ({ data, on
   const handleUnseal = () => {
     playPaperCrinkleSound();
     const musicTrackUrl = wish.custom_music_url || (wish as any).music_storage_url || 'synth://golden_hour';
-    playSynthTheme(musicTrackUrl, wish.music_volume ?? 0.8);
+    playSynthTheme(
+      musicTrackUrl,
+      wish.music_volume ?? 0.8,
+      wish.music_trim_start ?? 0,
+      wish.music_trim_end
+    );
 
     // Check if birthday is today or in future
     const dob = new Date(wish.recipient_dob);

@@ -24,22 +24,35 @@ export function useAudioEngine() {
     }
   }, []);
 
+  const audioIntervalRef = useRef<number | null>(null);
+
   const stop = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    if (audioIntervalRef.current) {
+      clearInterval(audioIntervalRef.current);
+      audioIntervalRef.current = null;
+    }
     if (htmlAudioRef.current) {
       try {
         htmlAudioRef.current.pause();
-        htmlAudioRef.current.currentTime = 0;
+        htmlAudioRef.current.onended = null;
+        htmlAudioRef.current.ontimeupdate = null;
+        htmlAudioRef.current.src = '';
         htmlAudioRef.current = null;
       } catch (e) {}
     }
     setIsPlaying(false);
   }, []);
 
-  const playSynthTheme = useCallback((themePreset: string = 'synth://golden_hour', volume: number = 0.8) => {
+  const playSynthTheme = useCallback((
+    themePreset: string = 'synth://golden_hour',
+    volume: number = 0.8,
+    trimStart: number = 0,
+    trimEnd?: number
+  ) => {
     stop();
     currentVolumeRef.current = Math.max(0, Math.min(1, volume));
 
@@ -47,13 +60,53 @@ export function useAudioEngine() {
     if (themePreset && (themePreset.startsWith('data:audio') || themePreset.startsWith('http://') || themePreset.startsWith('https://') || themePreset.startsWith('blob:'))) {
       try {
         const audio = new Audio(themePreset);
-        audio.loop = true;
+        audio.preload = 'auto';
         audio.volume = isMuted ? 0 : currentVolumeRef.current;
         htmlAudioRef.current = audio;
-        setIsPlaying(true);
-        audio.play().catch(err => {
-          console.warn('Audio auto-play policy prevented playback or failed:', err);
+
+        const startSec = Math.max(0, trimStart || 0);
+
+        const seekToStartAndPlay = () => {
+          try {
+            if (audio.currentTime !== startSec) {
+              audio.currentTime = startSec;
+            }
+          } catch (e) {}
+          audio.play().catch(err => {
+            console.warn('Audio auto-play policy prevented playback or failed:', err);
+          });
+        };
+
+        audio.addEventListener('loadedmetadata', () => {
+          seekToStartAndPlay();
         });
+
+        // Fast high-frequency time checking for gapless looping between trimStart and trimEnd
+        const loopMonitor = () => {
+          if (!htmlAudioRef.current) return;
+          const cur = htmlAudioRef.current.currentTime;
+          const effectiveEnd = (trimEnd && trimEnd > startSec) ? trimEnd : (htmlAudioRef.current.duration || Infinity);
+
+          if (cur >= effectiveEnd - 0.08) {
+            htmlAudioRef.current.currentTime = startSec;
+            if (htmlAudioRef.current.paused) {
+              htmlAudioRef.current.play().catch(() => {});
+            }
+          }
+        };
+
+        audio.addEventListener('timeupdate', loopMonitor);
+        audioIntervalRef.current = window.setInterval(loopMonitor, 80);
+
+        audio.onended = () => {
+          if (htmlAudioRef.current) {
+            htmlAudioRef.current.currentTime = startSec;
+            htmlAudioRef.current.play().catch(() => {});
+          }
+        };
+
+        setIsPlaying(true);
+        seekToStartAndPlay();
         return;
       } catch (err) {
         console.error('Failed to initialize HTML audio element:', err);

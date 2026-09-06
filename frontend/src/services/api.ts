@@ -69,7 +69,7 @@ export const api = {
     return res;
   },
   googleLogin: async (data: { email: string; google_id?: string; display_name?: string; avatar_url?: string; user_dob?: string; gender?: string }) => {
-    const res = await fetchApi<{ user: any; token: string }>('/auth/google', { method: 'POST', body: JSON.stringify(data) });
+    const res = await fetchApi<{ user: any; token: string; is_new_user?: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify(data) });
     if (res.token) setAuthToken(res.token);
     return res;
   },

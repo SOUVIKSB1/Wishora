@@ -68,11 +68,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSuccess }) => {
         avatar_url: googleUser.photoURL || undefined,
       });
 
-      // If existing user already has DOB configured, complete immediately
-      if (res.user && res.user.user_dob && res.user.user_dob !== '2000-01-01') {
+      // If returning existing user, complete login immediately
+      if (!res.is_new_user) {
         onSuccess(res.user);
       } else {
-        // First time or missing DOB -> Prompt clean 1-step Google completion
+        // First-time new user -> Prompt clean 1-step Google completion
         setView('google_complete');
       }
     } catch (err: any) {
